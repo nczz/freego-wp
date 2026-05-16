@@ -5,6 +5,7 @@
     var config = window.FreegoWP || {};
     var aggressiveRepair = !!config.aggressiveRepair;
     var fallbacks = config.fallbacks || {};
+    var repairCandidateSelector = 'img, [role="img"]:not(svg), a[href], iframe, input, textarea, select, table, th, object, embed, applet, h1, h2, h3, h4, h5, h6, [aria-expanded]';
 
     function hasText(value) {
         return typeof value === 'string' && value.trim().length > 0;
@@ -17,6 +18,19 @@
 
         var style = window.getComputedStyle(element);
         return style.display === 'none' || style.visibility === 'hidden';
+    }
+
+    function scopedElements(root, selector) {
+        var elements = [];
+        if (!root || root.nodeType !== Node.ELEMENT_NODE && root.nodeType !== Node.DOCUMENT_NODE) {
+            return elements;
+        }
+
+        if (root.nodeType === Node.ELEMENT_NODE && root.matches(selector)) {
+            elements.push(root);
+        }
+
+        return elements.concat(Array.prototype.slice.call(root.querySelectorAll(selector)));
     }
 
     function labelFromUrl(url) {
@@ -66,7 +80,7 @@
     }
 
     function repairImages(root) {
-        root.querySelectorAll('img:not([' + reviewedAttr + '])').forEach(function (image) {
+        scopedElements(root, 'img:not([' + reviewedAttr + '])').forEach(function (image) {
             image.setAttribute(reviewedAttr, '1');
             if (isHidden(image)) {
                 return;
@@ -90,7 +104,7 @@
             }
         });
 
-        root.querySelectorAll('[role="img"]:not(img):not(svg):not([' + reviewedAttr + '])').forEach(function (node) {
+        scopedElements(root, '[role="img"]:not(img):not(svg):not([' + reviewedAttr + '])').forEach(function (node) {
             node.setAttribute(reviewedAttr, '1');
             if (!isHidden(node) && !hasAccessibleName(node)) {
                 if (aggressiveRepair) {
@@ -102,7 +116,7 @@
     }
 
     function repairLinks(root) {
-        root.querySelectorAll('a[href]:not([' + reviewedAttr + '])').forEach(function (link) {
+        scopedElements(root, 'a[href]:not([' + reviewedAttr + '])').forEach(function (link) {
             link.setAttribute(reviewedAttr, '1');
             if (isHidden(link)) {
                 return;
@@ -130,7 +144,7 @@
     }
 
     function repairIframes(root) {
-        root.querySelectorAll('iframe:not([' + reviewedAttr + '])').forEach(function (iframe) {
+        scopedElements(root, 'iframe:not([' + reviewedAttr + '])').forEach(function (iframe) {
             iframe.setAttribute(reviewedAttr, '1');
             if (!hasText(iframe.getAttribute('title'))) {
                 if (aggressiveRepair) {
@@ -142,7 +156,7 @@
     }
 
     function repairControls(root) {
-        root.querySelectorAll('input, textarea, select').forEach(function (control) {
+        scopedElements(root, 'input, textarea, select').forEach(function (control) {
             if (control.hasAttribute(reviewedAttr) || isHidden(control)) {
                 return;
             }
@@ -179,14 +193,14 @@
     }
 
     function repairTables(root) {
-        root.querySelectorAll('table:not([' + reviewedAttr + '])').forEach(function (table) {
+        scopedElements(root, 'table:not([' + reviewedAttr + '])').forEach(function (table) {
             table.setAttribute(reviewedAttr, '1');
             if (!table.querySelector('caption')) {
                 table.setAttribute('data-freego-wp-needs-caption-review', '1');
             }
         });
 
-        root.querySelectorAll('th:not([scope])').forEach(function (header) {
+        scopedElements(root, 'th:not([scope])').forEach(function (header) {
             if (aggressiveRepair) {
                 header.setAttribute('scope', inferThScope(header));
             }
@@ -194,12 +208,12 @@
         });
 
         if (aggressiveRepair) {
-            root.querySelectorAll('table').forEach(repairTableHeaders);
+            scopedElements(root, 'table').forEach(repairTableHeaders);
         }
     }
 
     function repairEmbeds(root) {
-        root.querySelectorAll('object, embed, applet').forEach(function (embed) {
+        scopedElements(root, 'object, embed, applet').forEach(function (embed) {
             if (embed.hasAttribute(reviewedAttr) || isHidden(embed)) {
                 return;
             }
@@ -213,7 +227,7 @@
             }
         });
 
-        root.querySelectorAll('select').forEach(function (select) {
+        scopedElements(root, 'select').forEach(function (select) {
             if (select.querySelectorAll('option').length > 8 && !select.querySelector('optgroup')) {
                 if (aggressiveRepair) {
                     wrapOptionsInOptgroup(select);
@@ -277,7 +291,7 @@
     }
 
     function markHeadingReview(root) {
-        var headings = Array.prototype.slice.call(root.querySelectorAll('h1, h2, h3, h4, h5, h6'));
+        var headings = scopedElements(root, 'h1, h2, h3, h4, h5, h6');
         var previous = 0;
         headings.forEach(function (heading) {
             var level = parseInt(heading.tagName.substring(1), 10);
@@ -289,7 +303,7 @@
     }
 
     function repairDisclosure(root) {
-        root.querySelectorAll('[aria-expanded]').forEach(function (toggle) {
+        scopedElements(root, '[aria-expanded]').forEach(function (toggle) {
             if (!hasText(toggle.getAttribute('aria-controls'))) {
                 return;
             }
@@ -315,6 +329,41 @@
         repairDisclosure(root);
     }
 
+    var queuedRoots = [];
+    var queued = false;
+
+    function queueRun(root) {
+        if (!root || root.nodeType !== Node.ELEMENT_NODE && root.nodeType !== Node.DOCUMENT_NODE) {
+            return;
+        }
+
+        if (queuedRoots.indexOf(root) === -1) {
+            queuedRoots.push(root);
+        }
+
+        if (queued) {
+            return;
+        }
+
+        queued = true;
+        (window.requestAnimationFrame || window.setTimeout)(function () {
+            var roots = queuedRoots.slice();
+            queuedRoots = [];
+            queued = false;
+            roots.forEach(run);
+        });
+    }
+
+    function invalidate(element) {
+        if (!element || element.nodeType !== Node.ELEMENT_NODE) {
+            return;
+        }
+
+        var target = element.closest(repairCandidateSelector) || element;
+        target.removeAttribute(reviewedAttr);
+        queueRun(target);
+    }
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function () {
             run(document);
@@ -326,12 +375,26 @@
     if ('MutationObserver' in window) {
         new MutationObserver(function (mutations) {
             mutations.forEach(function (mutation) {
-                mutation.addedNodes.forEach(function (node) {
-                    if (node.nodeType === Node.ELEMENT_NODE) {
-                        run(node);
-                    }
-                });
+                if (mutation.type === 'childList') {
+                    mutation.addedNodes.forEach(function (node) {
+                        if (node.nodeType === Node.ELEMENT_NODE) {
+                            queueRun(node);
+                        } else if (node.parentElement) {
+                            invalidate(node.parentElement);
+                        }
+                    });
+                } else if (mutation.type === 'attributes') {
+                    invalidate(mutation.target);
+                } else if (mutation.type === 'characterData' && mutation.target.parentElement) {
+                    invalidate(mutation.target.parentElement);
+                }
             });
-        }).observe(document.documentElement, { childList: true, subtree: true });
+        }).observe(document.documentElement, {
+            attributeFilter: ['alt', 'aria-controls', 'aria-expanded', 'aria-hidden', 'aria-label', 'aria-labelledby', 'class', 'headers', 'href', 'id', 'name', 'placeholder', 'role', 'scope', 'src', 'style', 'title', 'type'],
+            attributes: true,
+            characterData: true,
+            childList: true,
+            subtree: true
+        });
     }
 })();

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.5
+
+- Strengthen frontend runtime repair for browser-rendered DOM changes.
+- Include dynamically inserted elements themselves when scanning MutationObserver additions.
+- Re-evaluate affected elements when accessibility-relevant attributes or text content change after initial repair.
+
 ## 0.1.4
 
 - Add bundled Traditional Chinese translation files: `freego-wp-zh_TW.po` and `freego-wp-zh_TW.mo`.
