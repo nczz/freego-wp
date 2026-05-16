@@ -42,6 +42,7 @@ final class Freego_WP_Scanner
         $body = (string) wp_remote_retrieve_body($response);
 
         if ($status < 200 || $status >= 300) {
+            /* translators: %d: HTTP response status code returned by the scanned URL. */
             return ['error' => sprintf(__('HTTP status %d returned by scanned URL.', 'freego-wp'), $status)];
         }
 

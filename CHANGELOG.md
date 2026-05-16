@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.3
+
+- Add WordPress i18n metadata and plugin textdomain loading.
+- Add `languages/freego-wp.pot` for community translation workflows.
+- Add translator comments for placeholder-based strings.
+- Localize remaining updater UI fallback strings.
+
 ## 0.1.2
 
 - Add optional uninstall cleanup controlled by an admin setting.

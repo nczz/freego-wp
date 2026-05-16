@@ -49,7 +49,9 @@ final class Freego_WP_CSS_Auditor
             foreach ($matches[1] as $value) {
                 $value = trim((string) $value);
                 if ($this->uses_absolute_length($value)) {
+                    /* translators: %s: CSS font-size value. */
                     $issues[] = $this->issue('CS2140401C', 'review', sprintf(__('Font size uses an absolute unit: %s', 'freego-wp'), $value), $source, $selector, 'font-size:' . $value);
+                    /* translators: %s: CSS font-size value. */
                     $issues[] = $this->issue('CS2140402C', 'review', sprintf(__('Text font size should be reviewed for em-relative sizing: %s', 'freego-wp'), $value), $source, $selector, 'font-size:' . $value);
                 }
             }
@@ -59,9 +61,11 @@ final class Freego_WP_CSS_Auditor
             foreach ($matches[1] as $value) {
                 $value = trim((string) $value);
                 if ($this->uses_absolute_length($value)) {
+                    /* translators: %s: CSS width or max-width value. */
                     $issues[] = $this->issue('CS3140801C', 'review', sprintf(__('Column or content width uses an absolute unit: %s', 'freego-wp'), $value), $source, $selector, 'width:' . $value);
                 }
                 if (preg_match('/([0-9.]+)\s*(?:em|rem|ch)/i', $value, $size) && (float) $size[1] > 80) {
+                    /* translators: %s: CSS width or max-width value. */
                     $issues[] = $this->issue('CS3140801C', 'review', sprintf(__('Column width may exceed 80 characters: %s', 'freego-wp'), $value), $source, $selector, 'width:' . $value);
                 }
             }
@@ -71,6 +75,7 @@ final class Freego_WP_CSS_Auditor
             foreach ($matches[1] as $value) {
                 $value = trim((string) $value);
                 if ($this->uses_absolute_length($value)) {
+                    /* translators: %s: CSS line-height value. */
                     $issues[] = $this->issue('CS3140802C', 'review', sprintf(__('Line height uses an absolute unit: %s', 'freego-wp'), $value), $source, $selector, 'line-height:' . $value);
                 }
             }

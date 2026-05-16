@@ -81,7 +81,7 @@ final class Freego_WP_GitHub_Updater
             'requires_php' => '7.4',
             'tested' => (string) ($release['tested'] ?? ''),
             'sections' => [
-                'description' => wp_kses_post($this->markdownish_to_html((string) ($release['body'] ?? 'Freego-oriented accessibility repair and audit workflow for WordPress.'))),
+                'description' => wp_kses_post($this->markdownish_to_html((string) ($release['body'] ?? __('Freego-oriented accessibility repair and audit workflow for WordPress.', 'freego-wp')))),
                 'changelog' => wp_kses_post($this->markdownish_to_html((string) ($release['body'] ?? ''))),
             ],
         ];
@@ -198,7 +198,7 @@ final class Freego_WP_GitHub_Updater
     {
         $text = trim($text);
         if ($text === '') {
-            return '<p>No release notes provided.</p>';
+            return '<p>' . esc_html__('No release notes provided.', 'freego-wp') . '</p>';
         }
 
         $lines = array_filter(array_map('trim', explode("\n", $text)));
