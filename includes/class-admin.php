@@ -87,6 +87,7 @@ final class Freego_WP_Admin
     {
         $this->require_admin('freego_wp_save_settings');
         update_option(FREEGO_WP_OPTION_AGGRESSIVE_REPAIR, !empty($_POST['aggressive_repair']) ? '1' : '0');
+        update_option(FREEGO_WP_OPTION_DELETE_DATA_ON_UNINSTALL, !empty($_POST['delete_data_on_uninstall']) ? '1' : '0');
         $target = isset($_POST['target_level']) ? strtoupper(sanitize_key((string) $_POST['target_level'])) : 'AAA';
         if (!in_array($target, ['A', 'AA', 'AAA'], true)) {
             $target = 'AAA';
@@ -173,6 +174,9 @@ final class Freego_WP_Admin
         echo '<label><input type="checkbox" name="aggressive_repair" value="1" ' . checked((bool) get_option(FREEGO_WP_OPTION_AGGRESSIVE_REPAIR, false), true, false) . '> ';
         echo esc_html__('Aggressive fake-value repair', 'freego-wp') . '</label>';
         echo '<p class="description">' . esc_html__('When enabled, missing required attributes receive fallback values across Freego-covered elements. Existing valid values are not overwritten. Review markers are still added so semantic cleanup remains traceable.', 'freego-wp') . '</p>';
+        echo '<p><label><input type="checkbox" name="delete_data_on_uninstall" value="1" ' . checked((bool) get_option(FREEGO_WP_OPTION_DELETE_DATA_ON_UNINSTALL, false), true, false) . '> ';
+        echo esc_html__('Delete plugin data when uninstalling', 'freego-wp') . '</label></p>';
+        echo '<p class="description">' . esc_html__('When enabled, uninstalling the plugin deletes the issue table, plugin options, cached update data, and Freego attachment metadata. Deactivation never deletes data.', 'freego-wp') . '</p>';
         submit_button(__('Save repair mode', 'freego-wp'), 'secondary', 'submit', false);
         echo '</form>';
 

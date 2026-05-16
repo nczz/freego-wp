@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2
+
+- Add optional uninstall cleanup controlled by an admin setting.
+- Keep deactivation non-destructive.
+- Cleanup can remove issue tables, plugin options, cached release metadata, and Freego attachment metadata.
+
 ## 0.1.1
 
 - Add a packaged release zip workflow for direct WordPress installation.
