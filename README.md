@@ -1,140 +1,147 @@
 # Freego WP Accessibility Assistant
 
-Freego WP Accessibility Assistant is an open-source WordPress plugin for Freego-oriented accessibility repair, authoring guardrails, and audit workflow.
+Freego WP Accessibility Assistant 是一套開源 WordPress 外掛，目標是協助網站以 Freego 檢測與人工語意稽核為核心，建立完整的無障礙修補、提示、追蹤與更新流程。
 
-The project is aligned with the locally observed Freego Dec 19 2025 checker. It is designed for Taiwan website accessibility workflows where automated Freego checks and human semantic review both matter.
+> English summary: An open-source WordPress plugin for Freego-oriented accessibility repair, authoring guardrails, issue workflow, A/AA/AAA targets, and GitHub Releases updates.
 
-## Goal
+本專案目前對齊本機觀察到的 **Freego Dec 19 2025** 檢測器，特別針對台灣網站無障礙流程中「Freego 機器檢測」與「人工語意判斷」需要並行的情境設計。
 
-The goal is to help WordPress sites move toward Freego/WCAG conformance through a complete workflow:
+## 目標
 
-- repair known machine-detectable markup problems
-- preserve review markers for semantic issues
-- guide authors while editing content and media
-- track unresolved accessibility work in the WordPress admin
-- support A, AA, and AAA target levels
-- keep the plugin updateable through GitHub Releases
+這個外掛不是宣稱「安裝後一鍵完全合規」，而是提供一個可落地的合規輔助系統：
 
-This plugin does not claim that a site becomes fully compliant simply by being installed. Accessibility conformance still requires human review for meaning, intent, media alternatives, document alternatives, and interaction quality.
+- 修補可由程式判斷的 HTML/DOM 問題
+- 對需要語意判斷的項目留下 review marker
+- 在內容編輯與媒體管理階段提示作者
+- 在 WordPress 後台追蹤尚未完成的無障礙工作
+- 支援 A、AA、AAA 目標等級
+- 透過 GitHub Releases 讓外掛可直接在後台更新
 
-## Features
+完整無障礙合規仍需要人工確認圖片替代文字、連結目的、媒體替代資訊、文件替代格式、互動操作與內容語意。
 
-- Freego Dec 19 2025 v3 rule matrix with 32 extracted checker classes
-- A, AA, and AAA target levels. AAA includes A and AA checks.
-- Output-buffer repair for legacy themes and third-party plugin output
-- Browser runtime repair for DOM inserted after page load
-- Optional aggressive fake-value repair mode for machine-check-oriented fallback values
-- Persistent issue workflow with `open`, `reviewed`, `ignored`, and `fixed` states
-- WordPress content and attachment scans on save
-- Single URL scan from the admin dashboard
-- CSS heuristic auditor for Freego CSS-related rules
-- Media fields for captions, transcripts, and open-format alternatives
-- GitHub Releases updater for WordPress admin updates
+## 功能
 
-## How It Works
+- Freego Dec 19 2025 v3 規則矩陣，已抽出 32 個 checker class
+- 支援 A、AA、AAA 目標等級，AAA 會包含 A 與 AA
+- OB output-buffer 修補既有主題與第三方外掛輸出
+- 前端 runtime 修補 JavaScript 後載入的 DOM
+- 可選的 aggressive fake-value repair，用於機器檢測導向的 fallback 值補強
+- Issue workflow：`open`、`reviewed`、`ignored`、`fixed`
+- 文章與附件儲存時自動掃描
+- 後台單一 URL 掃描
+- Freego CSS 相關規則的 heuristic auditor
+- 媒體欄位：字幕、逐字稿、開放格式替代檔
+- GitHub Releases updater，可在 WordPress 後台看到更新
 
-The plugin maps each Freego rule to a workflow:
+## 方法
+
+核心公式是：
 
 ```text
 Freego rule -> failing selector/condition -> scoped repair or marker -> review workflow
 ```
 
-Automatic repair is scoped to elements that match a known failing condition. Existing valid attributes are not overwritten.
+也就是只針對「符合失敗條件」的元素做修補或標記，不會無差別覆寫所有同類元素，也不會覆蓋已經存在且有效的屬性。
 
-Examples:
+例如：
 
 ```html
 <img src="photo.jpg">
 ```
 
-Conservative mode:
+保守模式：
 
 ```html
 <img src="photo.jpg" alt="" data-freego-wp-needs-alt-review="1">
 ```
 
-Aggressive mode:
+Aggressive 模式：
 
 ```html
 <img src="photo.jpg" alt="image" data-freego-wp-needs-alt-review="1">
 ```
 
-Aggressive mode is useful when you want fallback values for Freego-style machine checks, but review markers remain because fake values are not semantic proof.
+Aggressive 模式適合希望先補足 Freego 形式檢測 fallback 值的情境，但外掛仍會留下 review marker，因為假值不是語意合格的證明。
 
-## Admin Workflow
+## 後台流程
 
-After activation, open:
+啟用後進入：
 
 ```text
-Tools -> Freego Accessibility
+工具 -> Freego Accessibility
 ```
 
-The dashboard includes:
+後台提供：
 
-- target level setting: A, AA, or AAA
-- aggressive repair toggle
-- content scan
-- rendered URL scan
-- issue workflow
-- rule matrix
+- 目標等級：A、AA、AAA
+- Aggressive fake-value repair 開關
+- WordPress 內容掃描
+- Rendered URL 掃描
+- Issue workflow
+- Freego rule matrix
 
-## Installation
+## 安裝
 
-Clone or download this repository into WordPress:
+把 repo clone 到 WordPress 外掛目錄：
 
 ```sh
 cd wp-content/plugins
 git clone https://github.com/nczz/freego-wp.git
 ```
 
-Then activate **Freego WP Accessibility Assistant** from the WordPress plugins screen.
+然後在 WordPress 後台啟用 **Freego WP Accessibility Assistant**。
 
-## GitHub Update Mechanism
+## GitHub 更新機制
 
-This plugin includes a lightweight GitHub Releases updater.
+此外掛內建輕量 GitHub Releases updater。
 
-The update source is:
+更新來源：
 
 ```text
 https://github.com/nczz/freego-wp
 ```
 
-When a new GitHub release is published with a semver tag such as `v0.2.0`, WordPress checks the latest release through the GitHub API and shows an update in the Plugins screen when the release version is newer than `FREEGO_WP_VERSION`.
+當 GitHub release 發布新的 semver tag，例如 `v0.2.0`，WordPress 會透過 GitHub API 檢查 latest release。若 release 版本大於外掛內的 `FREEGO_WP_VERSION`，後台 Plugins 頁面就會顯示可更新。
 
-Release zipballs from GitHub are supported. The updater normalizes GitHub's extracted directory name back to `freego-wp` after installation.
+GitHub zipball 會被支援；updater 會在安裝後把 GitHub 解出的資料夾名稱正規化回 `freego-wp`。
 
-## Release Process
+## 發版流程
 
-1. Update the plugin header version and `FREEGO_WP_VERSION` in `freego-wp.php`.
-2. Commit and push the change.
-3. Create a GitHub release with a tag like `v0.2.0`.
-4. WordPress sites using the plugin will see the update through the admin plugins page.
+1. 修改 `freego-wp.php` 內 plugin header 的 `Version` 與 `FREEGO_WP_VERSION`
+2. commit 並 push
+3. 建立 GitHub release，例如：
 
-## Freego Rule Extraction
+```sh
+gh release create v0.2.0 --title "Freego WP Accessibility Assistant 0.2.0" --notes-file CHANGELOG.md
+```
 
-When Freego updates, regenerate rule metadata from the local app:
+4. 已安裝此外掛的 WordPress 站台會在後台看到更新
+
+## Freego 規則抽取
+
+Freego 更新時，可以用本專案工具重新抽取規則：
 
 ```sh
 tools/extract-freego-v3-rules.sh /Applications/Freego.app/Contents/app/freego.jar
 ```
 
-The extractor outputs:
+輸出欄位：
 
 ```text
 code    level    guideline    web_id    description
 ```
 
-## Current Limitations
+## 目前限制
 
-- CSS auditing is heuristic and static. It is not yet equivalent to browser computed-style inspection.
-- Full AAA still requires human semantic review.
-- Freego `.cat` report import is not implemented yet.
-- Deep Gutenberg sidebar integration is planned but not complete.
-- Browser-driven parity testing with Playwright/Selenium is a future step.
+- CSS auditor 目前是靜態 heuristic，尚未等同於瀏覽器 computed style 檢查
+- 完整 AAA 仍需要人工語意稽核
+- 尚未支援匯入 Freego `.cat` 檢測報告
+- Gutenberg sidebar 深度整合尚未完成
+- 尚未加入 Playwright/Selenium 的 rendered DOM parity 測試
 
-## Development
+## 開發
 
-Recommended checks:
+建議檢查：
 
 ```sh
 docker run --rm -v "$PWD:/app:ro" -w /app php:8.2-cli sh -lc 'for f in $(find . -name "*.php" -print); do php -l "$f" || exit 1; done'
@@ -145,3 +152,7 @@ tools/extract-freego-v3-rules.sh /Applications/Freego.app/Contents/app/freego.ja
 ## License
 
 GPL-2.0-or-later. See [LICENSE](LICENSE).
+
+## English Summary
+
+Freego WP Accessibility Assistant helps WordPress sites move toward Freego/WCAG conformance through scoped DOM repair, authoring guardrails, persistent issue tracking, A/AA/AAA targets, CSS heuristics, and GitHub Releases updates. It does not replace human semantic review.

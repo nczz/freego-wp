@@ -8,37 +8,49 @@ Stable tag: 0.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Freego-oriented accessibility repair, authoring guardrails, and audit workflow for WordPress.
+以 Freego 檢測為核心的 WordPress 無障礙修補、提示與稽核流程外掛。
 
 == Description ==
 
-Freego WP Accessibility Assistant helps WordPress sites move toward Freego/WCAG conformance through scoped repair, issue tracking, and human semantic review workflow.
+Freego WP Accessibility Assistant 協助 WordPress 網站朝 Freego/WCAG 合規前進。它不是「一鍵宣稱合規」工具，而是把機器可判斷的修補、人工語意稽核、內容提示與 issue 追蹤整合在 WordPress 後台。
 
-It includes a Freego Dec 19 2025 v3 rule matrix, A/AA/AAA target levels, output-buffer repair, runtime DOM repair, issue workflow, media guardrails, CSS heuristics, and a GitHub Releases updater.
+主要功能包含：
 
-This plugin does not claim one-click compliance. Human review is still required for semantic quality, link purpose, media alternatives, document alternatives, and complex interactions.
+* Freego Dec 19 2025 v3 規則矩陣
+* A、AA、AAA 目標等級
+* output-buffer HTML 修補
+* 前端 runtime DOM 修補
+* 可選的 aggressive fake-value repair
+* issue workflow
+* 媒體 guardrails
+* CSS heuristic auditor
+* GitHub Releases updater
+
+此外掛仍需要人工確認圖片替代文字、連結目的、媒體替代資訊、文件替代格式與複雜互動品質。
+
+English: A Freego-oriented WordPress accessibility assistant for scoped repair, authoring guardrails, issue workflow, A/AA/AAA targets, and GitHub-based updates.
 
 == Installation ==
 
-1. Upload or clone the plugin into `wp-content/plugins/freego-wp`.
-2. Activate it from the WordPress plugins screen.
-3. Open Tools -> Freego Accessibility.
-4. Choose the target level and repair mode.
-5. Run content or URL scans and review open issues.
+1. 將外掛上傳或 clone 到 `wp-content/plugins/freego-wp`。
+2. 到 WordPress 後台啟用外掛。
+3. 開啟 Tools -> Freego Accessibility。
+4. 選擇目標等級與修補模式。
+5. 執行內容或 URL 掃描，並處理 open issues。
 
 == Frequently Asked Questions ==
 
-= Does this guarantee AAA compliance? =
+= 這能保證 AAA 合規嗎？ =
 
-No. It supports AAA-oriented workflow and machine-check repair, but AAA conformance still requires human semantic review.
+不能。外掛支援 AAA 導向流程與機器檢測修補，但 AAA 合規仍需要人工語意稽核。
 
-= What is aggressive fake-value repair? =
+= Aggressive fake-value repair 是什麼？ =
 
-It is an optional mode that fills missing required values such as `alt="image"` or `title="frame"` for elements that match known failing conditions. Review markers remain so teams can replace fake values with meaningful content.
+這是可選模式。開啟後，外掛會針對符合失敗條件的元素補上 fallback 值，例如 `alt="image"` 或 `title="frame"`。外掛仍會留下 review marker，讓團隊後續替換成真正有意義的內容。
 
-= How do updates work? =
+= 如何更新？ =
 
-The plugin checks GitHub Releases at https://github.com/nczz/freego-wp and shows updates in the WordPress admin when a newer release tag is published.
+外掛會檢查 GitHub Releases：https://github.com/nczz/freego-wp 。當有較新的 release tag 時，WordPress 後台會顯示可更新。
 
 == Changelog ==
 
