@@ -18,6 +18,7 @@ rsync -a \
   --exclude='build' \
   --exclude='coverage' \
   --exclude='scripts' \
+  --exclude='tests' \
   --exclude='tools' \
   --exclude='node_modules' \
   --exclude='vendor' \

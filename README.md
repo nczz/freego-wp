@@ -199,6 +199,7 @@ OB 修補與 Freego checker predicate 的對照文件位於：
 
 ```text
 docs/freego-ob-repair-map.md
+docs/freego-v3-bytecode-matrix.md
 ```
 
 輸出欄位：

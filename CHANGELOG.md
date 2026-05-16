@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.10
+
+- Add Freego v3 bytecode predicate matrix documentation.
+- Add output repair fixture coverage for CSS unit repair, select labeling, icon controls, and language repair.
+- Keep fixture tests out of the installable release package.
+
 ## 0.1.9
 
 - Expand CSS accessibility unit repair to `max-width` and `line-height`.
