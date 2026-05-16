@@ -103,19 +103,25 @@ https://github.com/nczz/freego-wp
 
 當 GitHub release 發布新的 semver tag，例如 `v0.2.0`，WordPress 會透過 GitHub API 檢查 latest release。若 release 版本大於外掛內的 `FREEGO_WP_VERSION`，後台 Plugins 頁面就會顯示可更新。
 
-GitHub zipball 會被支援；updater 會在安裝後把 GitHub 解出的資料夾名稱正規化回 `freego-wp`。
+正式 release 會附上 `freego-wp.zip` asset，這是給 WordPress 直接安裝與更新使用的 package。GitHub 自動產生的 Source code zip 只作為 fallback。
 
 ## 發版流程
 
 1. 修改 `freego-wp.php` 內 plugin header 的 `Version` 與 `FREEGO_WP_VERSION`
 2. commit 並 push
-3. 建立 GitHub release，例如：
+3. 建立安裝包：
 
 ```sh
-gh release create v0.2.0 --title "Freego WP Accessibility Assistant 0.2.0" --notes-file CHANGELOG.md
+scripts/build-release.sh
 ```
 
-4. 已安裝此外掛的 WordPress 站台會在後台看到更新
+4. 建立 GitHub release 並上傳 `dist/freego-wp.zip`，例如：
+
+```sh
+gh release create v0.2.0 dist/freego-wp.zip --title "Freego WP Accessibility Assistant 0.2.0" --notes-file CHANGELOG.md
+```
+
+5. 已安裝此外掛的 WordPress 站台會在後台看到更新
 
 ## Freego 規則抽取
 
@@ -147,6 +153,7 @@ code    level    guideline    web_id    description
 docker run --rm -v "$PWD:/app:ro" -w /app php:8.2-cli sh -lc 'for f in $(find . -name "*.php" -print); do php -l "$f" || exit 1; done'
 node --check assets/js/runtime.js
 tools/extract-freego-v3-rules.sh /Applications/Freego.app/Contents/app/freego.jar
+scripts/build-release.sh
 ```
 
 ## License

@@ -31,7 +31,7 @@ final class Freego_WP_GitHub_Updater
         }
 
         $release = $this->latest_release();
-        if (!$release || empty($release['version']) || empty($release['zipball_url'])) {
+        if (!$release || empty($release['version']) || empty($release['download_url'])) {
             return $transient;
         }
 
@@ -44,7 +44,7 @@ final class Freego_WP_GitHub_Updater
             'plugin' => $this->plugin_basename,
             'new_version' => (string) $release['version'],
             'url' => FREEGO_WP_GITHUB_REPO_URL,
-            'package' => (string) $release['zipball_url'],
+            'package' => (string) $release['download_url'],
             'tested' => (string) ($release['tested'] ?? ''),
             'requires' => '6.0',
             'requires_php' => '7.4',
@@ -76,7 +76,7 @@ final class Freego_WP_GitHub_Updater
             'version' => (string) ($release['version'] ?? FREEGO_WP_VERSION),
             'author' => '<a href="https://github.com/' . esc_attr(FREEGO_WP_GITHUB_OWNER) . '">MXP</a>',
             'homepage' => FREEGO_WP_GITHUB_REPO_URL,
-            'download_link' => (string) ($release['zipball_url'] ?? ''),
+            'download_link' => (string) ($release['download_url'] ?? ''),
             'requires' => '6.0',
             'requires_php' => '7.4',
             'tested' => (string) ($release['tested'] ?? ''),
@@ -156,6 +156,7 @@ final class Freego_WP_GitHub_Updater
             'tag_name' => (string) $body['tag_name'],
             'body' => (string) ($body['body'] ?? ''),
             'zipball_url' => (string) ($body['zipball_url'] ?? ''),
+            'download_url' => $this->release_download_url($body),
             'html_url' => (string) ($body['html_url'] ?? FREEGO_WP_GITHUB_REPO_URL),
             'tested' => $this->extract_tested((string) ($body['body'] ?? '')),
         ];
@@ -163,6 +164,25 @@ final class Freego_WP_GitHub_Updater
         set_site_transient($cache_key, $release, HOUR_IN_SECONDS);
 
         return $release;
+    }
+
+    /**
+     * @param array<string,mixed> $release
+     */
+    private function release_download_url(array $release): string
+    {
+        foreach ((array) ($release['assets'] ?? []) as $asset) {
+            if (!is_array($asset)) {
+                continue;
+            }
+
+            $name = (string) ($asset['name'] ?? '');
+            if ($name === FREEGO_WP_GITHUB_REPO . '.zip' && !empty($asset['browser_download_url'])) {
+                return (string) $asset['browser_download_url'];
+            }
+        }
+
+        return (string) ($release['zipball_url'] ?? '');
     }
 
     private function extract_tested(string $body): string

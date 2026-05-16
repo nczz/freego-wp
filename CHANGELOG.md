@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1
+
+- Add a packaged release zip workflow for direct WordPress installation.
+- Prefer the `freego-wp.zip` GitHub release asset in the WordPress updater.
+- Keep GitHub source zipball as a fallback only.
+
 ## 0.1.0
 
 - Initial public release.

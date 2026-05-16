@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Freego WP Accessibility Assistant
  * Description: Freego-oriented accessibility repair, authoring guardrails, and audit workflow for WordPress.
- * Version: 0.1.0
+ * Version: 0.1.1
  * Author: MXP
  * Text Domain: freego-wp
  * License: GPL-2.0-or-later
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('FREEGO_WP_VERSION', '0.1.0');
+define('FREEGO_WP_VERSION', '0.1.1');
 define('FREEGO_WP_FILE', __FILE__);
 define('FREEGO_WP_DIR', plugin_dir_path(__FILE__));
 define('FREEGO_WP_URL', plugin_dir_url(__FILE__));

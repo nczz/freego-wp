@@ -24,5 +24,6 @@ tools/extract-freego-v3-rules.sh /Applications/Freego.app/Contents/app/freego.ja
 
 1. Update `FREEGO_WP_VERSION` and the plugin header version in `freego-wp.php`.
 2. Commit the change.
-3. Create a GitHub release tagged as `vX.Y.Z`.
-4. WordPress sites using this plugin will see the release through the built-in GitHub updater.
+3. Run `scripts/build-release.sh`.
+4. Create a GitHub release tagged as `vX.Y.Z` and upload `dist/freego-wp.zip`.
+5. WordPress sites using this plugin will see the release through the built-in GitHub updater.
