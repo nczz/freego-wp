@@ -1,0 +1,319 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Freego WP Accessibility Assistant 0.1.4\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/freego-wp\n"
+"Last-Translator: MXP <im@mxp.tw>\n"
+"Language-Team: Traditional Chinese <zh_TW@li.org>\n"
+"Language: zh_TW\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2026-05-16 13:45+0800\n"
+"X-Generator: Codex\n"
+"X-Domain: freego-wp\n"
+
+msgid "Freego WP Accessibility Assistant"
+msgstr "Freego WP 無障礙輔助工具"
+
+msgid "Freego-oriented accessibility repair, authoring guardrails, and audit workflow for WordPress."
+msgstr "為 WordPress 提供以 Freego 為核心的無障礙修補、編輯防護與稽核流程。"
+
+msgid "MXP"
+msgstr "MXP"
+
+msgid "Freego Accessibility"
+msgstr "Freego 無障礙"
+
+msgid "Dashboard"
+msgstr "儀表板"
+
+msgid "Issue status updated."
+msgstr "問題狀態已更新。"
+
+msgid "Unable to update issue status."
+msgstr "無法更新問題狀態。"
+
+msgid "Settings saved."
+msgstr "設定已儲存。"
+
+msgid "You do not have permission to access this page."
+msgstr "你沒有權限存取此頁面。"
+
+msgid "Freego Accessibility Assistant"
+msgstr "Freego 無障礙輔助工具"
+
+msgid "This dashboard connects automatic repair, authoring guardrails, semantic review, and Freego-oriented rule tracking."
+msgstr "此儀表板串接自動修補、編輯防護、語意審查與 Freego 規則追蹤。"
+
+msgid "Scan"
+msgstr "掃描"
+
+msgid "Scan WordPress Content"
+msgstr "掃描 WordPress 內容"
+
+msgid "Scans public posts/pages and attachments, then stores review tasks."
+msgstr "掃描公開文章、頁面與附件，並儲存審查工作。"
+
+msgid "Limit"
+msgstr "限制筆數"
+
+msgid "Run content scan"
+msgstr "執行內容掃描"
+
+msgid "Scan Rendered URL"
+msgstr "掃描已渲染網址"
+
+msgid "Fetches one rendered HTML response and stores findings. Use Freego for browser-authoritative validation."
+msgstr "擷取一個已渲染的 HTML 回應並儲存發現項目。瀏覽器權威驗證仍請使用 Freego。"
+
+msgid "Scan URL"
+msgstr "掃描網址"
+
+msgid "Repair Mode"
+msgstr "修補模式"
+
+msgid "Target level"
+msgstr "目標等級"
+
+msgid "Aggressive fake-value repair"
+msgstr "積極假值修補"
+
+msgid "When enabled, missing required attributes receive fallback values across Freego-covered elements. Existing valid values are not overwritten. Review markers are still added so semantic cleanup remains traceable."
+msgstr "啟用後，Freego 涵蓋元素若缺少必要屬性，會補上 fallback 值。既有有效值不會被覆寫，且仍會加入審查標記，讓語意修正可追蹤。"
+
+msgid "Delete plugin data when uninstalling"
+msgstr "解除安裝時刪除外掛資料"
+
+msgid "When enabled, uninstalling the plugin deletes the issue table, plugin options, cached update data, and Freego attachment metadata. Deactivation never deletes data."
+msgstr "啟用後，解除安裝外掛會刪除問題資料表、外掛選項、快取更新資料與 Freego 附件 metadata。停用外掛永遠不會刪除資料。"
+
+msgid "Save repair mode"
+msgstr "儲存修補模式"
+
+msgid "Rule Automation Split"
+msgstr "規則自動化分類"
+
+msgid "Issue Workflow"
+msgstr "問題處理流程"
+
+msgid "Open items are not automatically claimed as compliant. Mark them reviewed only after semantic or engineering confirmation."
+msgstr "未處理項目不會自動宣稱合規。請在語意或工程確認後，才標記為已審查。"
+
+msgid "No issues match the current filter."
+msgstr "沒有符合目前篩選條件的問題。"
+
+msgid "Code"
+msgstr "代碼"
+
+msgid "Status"
+msgstr "狀態"
+
+msgid "Source"
+msgstr "來源"
+
+msgid "Finding"
+msgstr "發現項目"
+
+msgid "Actions"
+msgstr "操作"
+
+msgid "View"
+msgstr "檢視"
+
+msgid "Snippet"
+msgstr "片段"
+
+msgid "Reviewed"
+msgstr "已審查"
+
+msgid "Fixed"
+msgstr "已修正"
+
+msgid "Ignore"
+msgstr "忽略"
+
+msgid "Freego Dec 19 2025 Rule Matrix"
+msgstr "Freego 2025-12-19 規則矩陣"
+
+msgid "The matrix drives which findings can be repaired, which must enter semantic review, and which are report-only diagnostics."
+msgstr "此矩陣決定哪些發現項目可修補、哪些必須進入語意審查，以及哪些僅作為診斷報告。"
+
+msgid "Level"
+msgstr "等級"
+
+msgid "Guideline"
+msgstr "指引"
+
+msgid "Automation"
+msgstr "自動化"
+
+msgid "Description"
+msgstr "說明"
+
+msgid "Surfaces"
+msgstr "作用範圍"
+
+msgid "Issues"
+msgstr "問題"
+
+msgid "Rule Matrix"
+msgstr "規則矩陣"
+
+msgid "Auto repair"
+msgstr "自動修補"
+
+msgid "Repair then review"
+msgstr "修補後審查"
+
+msgid "Human review"
+msgstr "人工審查"
+
+msgid "Report only"
+msgstr "僅報告"
+
+msgid "You do not have permission to perform this action."
+msgstr "你沒有權限執行此操作。"
+
+#. translators: %s: CSS font-size value.
+msgid "Font size uses an absolute unit: %s"
+msgstr "字級使用絕對單位：%s"
+
+#. translators: %s: CSS font-size value.
+msgid "Text font size should be reviewed for em-relative sizing: %s"
+msgstr "文字字級應審查是否需改為 em 相對尺寸：%s"
+
+#. translators: %s: CSS width or max-width value.
+msgid "Column or content width uses an absolute unit: %s"
+msgstr "欄位或內容寬度使用絕對單位：%s"
+
+#. translators: %s: CSS width or max-width value.
+msgid "Column width may exceed 80 characters: %s"
+msgstr "欄寬可能超過 80 個字元：%s"
+
+#. translators: %s: CSS line-height value.
+msgid "Line height uses an absolute unit: %s"
+msgstr "行高使用絕對單位：%s"
+
+msgid "Text styling was found without an explicit line-height declaration."
+msgstr "發現文字樣式，但未明確宣告 line-height。"
+
+msgid "Freego-oriented accessibility repair and audit workflow for WordPress."
+msgstr "為 WordPress 提供以 Freego 為核心的無障礙修補與稽核流程。"
+
+msgid "No release notes provided."
+msgstr "未提供發行說明。"
+
+msgid "No open Freego issues for this content."
+msgstr "此內容沒有未處理的 Freego 問題。"
+
+msgid "Open issue workflow"
+msgstr "開啟問題處理流程"
+
+msgid "Captions URL"
+msgstr "字幕網址"
+
+msgid "Used for Freego media caption/transcript review."
+msgstr "用於 Freego 媒體字幕與逐字稿審查。"
+
+msgid "Transcript"
+msgstr "逐字稿"
+
+msgid "Provide equivalent text content when captions are not enough."
+msgstr "當字幕不足時，提供等效文字內容。"
+
+msgid "Open-format alternative"
+msgstr "開放格式替代檔"
+
+msgid "ODF, PDF, or HTML alternative URL for Freego review."
+msgstr "供 Freego 審查使用的 ODF、PDF 或 HTML 替代檔網址。"
+
+msgid "image"
+msgstr "圖片"
+
+msgid "submit"
+msgstr "送出"
+
+msgid "link"
+msgstr "連結"
+
+msgid "frame"
+msgstr "框架"
+
+msgid "embedded content"
+msgstr "嵌入內容"
+
+msgid "Skip to main content"
+msgstr "跳至主要內容"
+
+msgid "Field pending accessibility review"
+msgstr "欄位待無障礙審查"
+
+msgid "Link pending accessibility review"
+msgstr "連結待無障礙審查"
+
+msgid "options"
+msgstr "選項"
+
+msgid "field"
+msgstr "欄位"
+
+msgid "Please enter a valid HTTP or HTTPS URL."
+msgstr "請輸入有效的 HTTP 或 HTTPS 網址。"
+
+#. translators: %d: HTTP response status code returned by the scanned URL.
+msgid "HTTP status %d returned by scanned URL."
+msgstr "掃描網址回傳 HTTP 狀態碼 %d。"
+
+msgid "The scanned URL did not return HTML content."
+msgstr "掃描網址未回傳 HTML 內容。"
+
+msgid "Image attachment is missing alt text."
+msgstr "圖片附件缺少替代文字。"
+
+msgid "Media attachment needs captions, transcript, or equivalent alternative content."
+msgstr "媒體附件需要字幕、逐字稿或等效替代內容。"
+
+msgid "Office document should have an open-format alternative or manual confirmation."
+msgstr "Office 文件應提供開放格式替代檔，或進行人工確認。"
+
+msgid "Unable to parse HTML for accessibility scan."
+msgstr "無法解析 HTML 以進行無障礙掃描。"
+
+msgid "The html element is missing a lang value."
+msgstr "html 元素缺少 lang 值。"
+
+msgid "The page is missing a non-empty title element."
+msgstr "頁面缺少非空白的 title 元素。"
+
+msgid "Image is missing alt text."
+msgstr "圖片缺少替代文字。"
+
+msgid "Image alt text matches the src value and needs semantic review."
+msgstr "圖片替代文字與 src 值相同，需要語意審查。"
+
+msgid "Image submit input is missing alt text."
+msgstr "圖片送出按鈕缺少替代文字。"
+
+msgid "Link has no text, title, or aria-label."
+msgstr "連結沒有文字、title 或 aria-label。"
+
+msgid "Iframe is missing title."
+msgstr "Iframe 缺少 title。"
+
+msgid "Table is missing a caption or equivalent summary."
+msgstr "表格缺少 caption 或等效摘要。"
+
+msgid "Table header cell is missing scope."
+msgstr "表格標題儲存格缺少 scope。"
+
+msgid "Long select list should be reviewed for option grouping."
+msgstr "較長的下拉選單應審查是否需要選項分組。"
+
+msgid "No heading elements found on the page."
+msgstr "頁面上找不到標題元素。"
+
+msgid "Office-format download link needs open-format review."
+msgstr "Office 格式下載連結需要開放格式審查。"
+
+msgid "Content contains generic link text such as \"more\"; verify link purpose."
+msgstr "內容包含「更多」這類泛用連結文字；請確認連結目的。"

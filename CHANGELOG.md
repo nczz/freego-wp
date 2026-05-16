@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.4
+
+- Add bundled Traditional Chinese translation files: `freego-wp-zh_TW.po` and `freego-wp-zh_TW.mo`.
+- Ensure WordPress sites using `zh_TW` can load localized plugin UI without waiting for a community language pack.
+
 ## 0.1.3
 
 - Add WordPress i18n metadata and plugin textdomain loading.

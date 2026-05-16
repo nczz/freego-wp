@@ -4,7 +4,7 @@ Tags: accessibility, wcag, freego, taiwan, audit
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 0.1.3
+Stable tag: 0.1.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -53,6 +53,10 @@ English: A Freego-oriented WordPress accessibility assistant for scoped repair, 
 外掛會檢查 GitHub Releases：https://github.com/nczz/freego-wp 。當有較新的 release tag 時，WordPress 後台會顯示可更新。
 
 == Changelog ==
+
+= 0.1.4 =
+
+新增內建繁體中文語系檔 `freego-wp-zh_TW.po` 與 `freego-wp-zh_TW.mo`，讓繁中後台可直接顯示中文介面。
 
 = 0.1.3 =
 
