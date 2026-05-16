@@ -8,6 +8,8 @@ final class Freego_WP_Output_Repair
 {
     private Freego_WP_Rules $rules;
     private bool $aggressive_repair = false;
+    /** @var array<string,string> */
+    private static array $css_inline_cache = [];
 
     public function __construct(Freego_WP_Rules $rules)
     {
@@ -55,15 +57,23 @@ final class Freego_WP_Output_Repair
         $xpath = new DOMXPath($document);
 
         $this->repair_html_lang($document);
+        $this->repair_language_sections($document, $xpath);
+        $this->repair_document_title($document);
         $this->repair_images($xpath);
+        $this->repair_image_maps($xpath);
         $this->repair_image_inputs($xpath);
         $this->repair_links($xpath);
+        $this->repair_buttons($xpath);
         $this->repair_iframes($xpath);
         $this->repair_forms($document, $xpath);
+        $this->repair_navigation_landmarks($xpath);
         $this->repair_tables($document, $xpath);
         $this->repair_embeds($document, $xpath);
+        $this->repair_headings($document, $xpath);
         $this->mark_heading_review($xpath);
         $this->ensure_skip_link($document, $xpath);
+        $this->repair_inline_font_sizes($xpath);
+        $this->inline_repaired_stylesheets($document, $xpath);
         $this->mark_report($document);
 
         $output = $document->saveHTML();
@@ -96,6 +106,276 @@ final class Freego_WP_Output_Repair
         $html->setAttribute('data-freego-wp-repaired', trim($html->getAttribute('data-freego-wp-repaired') . ' HM2310200C'));
     }
 
+    private function repair_language_sections(DOMDocument $document, DOMXPath $xpath): void
+    {
+        $html = $document->getElementsByTagName('html')->item(0);
+        $page_lang = $html instanceof DOMElement ? trim($html->getAttribute('lang')) : '';
+        if ($page_lang === '') {
+            $page_lang = str_replace('_', '-', get_locale() ?: 'zh-TW');
+        }
+
+        $normalized_page_lang = $this->normalize_lang($page_lang);
+
+        foreach ($xpath->query('//body//*[@lang]') ?: [] as $element) {
+            if (!$element instanceof DOMElement || $this->is_hidden($element)) {
+                continue;
+            }
+
+            $lang = trim($element->getAttribute('lang'));
+            if ($lang === '') {
+                $element->setAttribute('lang', $page_lang);
+                $element->setAttribute('data-freego-wp-repaired', trim($element->getAttribute('data-freego-wp-repaired') . ' HM2310200C'));
+                continue;
+            }
+
+            if ($this->normalize_lang($lang) === $normalized_page_lang) {
+                $element->removeAttribute('lang');
+                $element->setAttribute('data-freego-wp-repaired', trim($element->getAttribute('data-freego-wp-repaired') . ' HM2310200C'));
+            }
+        }
+    }
+
+    private function repair_document_title(DOMDocument $document): void
+    {
+        $head = $document->getElementsByTagName('head')->item(0);
+        if (!$head instanceof DOMElement) {
+            return;
+        }
+
+        $title = null;
+        foreach ($head->getElementsByTagName('title') as $candidate) {
+            if ($candidate instanceof DOMElement && strtolower($candidate->parentNode?->nodeName ?? '') === 'head') {
+                $title = $candidate;
+                break;
+            }
+        }
+
+        if ($title instanceof DOMElement && trim($title->textContent) !== '') {
+            return;
+        }
+
+        $text = trim(wp_get_document_title());
+        if ($text === '') {
+            $text = get_bloginfo('name') ?: __('Page', 'freego-wp');
+        }
+
+        if (!$title instanceof DOMElement) {
+            $title = $document->createElement('title');
+            $head->insertBefore($title, $head->firstChild);
+        }
+
+        $title->nodeValue = '';
+        $title->appendChild($document->createTextNode($text));
+        $title->setAttribute('data-freego-wp-repaired', 'HM1240200C');
+    }
+
+    private function inline_repaired_stylesheets(DOMDocument $document, DOMXPath $xpath): void
+    {
+        $enabled = (bool) apply_filters('freego_wp_inline_css_repair_enabled', true);
+        if (!$enabled) {
+            return;
+        }
+
+        foreach ($xpath->query('//link[@href]') ?: [] as $link) {
+            if (!$link instanceof DOMElement || !$this->is_stylesheet_link($link)) {
+                continue;
+            }
+
+            $href = html_entity_decode(trim($link->getAttribute('href')), ENT_QUOTES);
+            $css = $this->load_repaired_stylesheet($href);
+            if ($css === null) {
+                continue;
+            }
+
+            $style = $document->createElement('style');
+            $style->setAttribute('data-freego-wp-inlined-css', esc_url($href));
+            $style->setAttribute('data-freego-wp-repaired', 'CS2140401C');
+
+            $media = trim($link->getAttribute('media'));
+            if ($media !== '') {
+                $style->setAttribute('media', $media);
+            }
+
+            $style->appendChild($document->createTextNode($css));
+
+            if ($link->parentNode) {
+                $link->parentNode->replaceChild($style, $link);
+            }
+        }
+    }
+
+    private function is_stylesheet_link(DOMElement $link): bool
+    {
+        if (trim($link->getAttribute('disabled')) !== '' || trim($link->getAttribute('integrity')) !== '') {
+            return false;
+        }
+
+        $rel = strtolower(trim($link->getAttribute('rel')));
+        if ($rel === '' || strpos($rel, 'stylesheet') === false || strpos($rel, 'alternate') !== false) {
+            return false;
+        }
+
+        $href = trim($link->getAttribute('href'));
+        return $href !== '' && !preg_match('/^(data|javascript):/i', $href);
+    }
+
+    private function load_repaired_stylesheet(string $href): ?string
+    {
+        $resolved = $this->resolve_local_stylesheet($href);
+        if (!$resolved) {
+            return null;
+        }
+
+        [$path, $url] = $resolved;
+        if (isset(self::$css_inline_cache[$path])) {
+            return self::$css_inline_cache[$path];
+        }
+
+        $css = file_get_contents($path);
+        if (!is_string($css) || $css === '') {
+            return null;
+        }
+
+        $repaired = $this->repair_css_font_sizes($css);
+        if ($repaired === $css) {
+            return null;
+        }
+
+        $repaired = $this->rewrite_css_urls($repaired, $url);
+        self::$css_inline_cache[$path] = $repaired;
+
+        return $repaired;
+    }
+
+    /**
+     * @return array{0:string,1:string}|null
+     */
+    private function resolve_local_stylesheet(string $href): ?array
+    {
+        $absolute_url = esc_url_raw(wp_make_link_relative($href));
+        if (strpos($href, '//') === 0) {
+            $scheme = is_ssl() ? 'https:' : 'http:';
+            $absolute_url = $scheme . $href;
+        } elseif (preg_match('/^https?:\/\//i', $href)) {
+            $absolute_url = $href;
+        } elseif (strpos($href, '/') === 0) {
+            $absolute_url = home_url($href);
+        } else {
+            $absolute_url = home_url('/' . ltrim($href, '/'));
+        }
+
+        $site_host = wp_parse_url(home_url(), PHP_URL_HOST);
+        $css_host = wp_parse_url($absolute_url, PHP_URL_HOST);
+        if ($site_host && $css_host && strtolower($site_host) !== strtolower($css_host)) {
+            return null;
+        }
+
+        $path = (string) wp_parse_url($absolute_url, PHP_URL_PATH);
+        if ($path === '' || strtolower(pathinfo($path, PATHINFO_EXTENSION)) !== 'css') {
+            return null;
+        }
+
+        $allowed_prefixes = (array) apply_filters('freego_wp_inline_css_repair_allowed_paths', [
+            'wp-content/themes/',
+            'wp-content/uploads/flipbook/',
+        ]);
+
+        $relative = ltrim($path, '/');
+        $allowed = false;
+        foreach ($allowed_prefixes as $prefix) {
+            $prefix = ltrim((string) $prefix, '/');
+            if ($prefix !== '' && strpos($relative, $prefix) === 0) {
+                $allowed = true;
+                break;
+            }
+        }
+
+        if (!$allowed) {
+            return null;
+        }
+
+        $file = realpath(ABSPATH . $relative);
+        $root = realpath(ABSPATH);
+        if (!$file || !$root || strpos($file, $root . DIRECTORY_SEPARATOR) !== 0 || !is_readable($file)) {
+            return null;
+        }
+
+        return [$file, home_url('/' . $relative)];
+    }
+
+    private function repair_css_font_sizes(string $css): string
+    {
+        return preg_replace_callback(
+            '/font-size(\s*:\s*)([0-9]+(?:\.[0-9]+)?)px\b/i',
+            function (array $matches): string {
+                return 'font-size' . $matches[1] . $this->px_to_rem((float) $matches[2]);
+            },
+            $css
+        ) ?? $css;
+    }
+
+    private function repair_inline_font_sizes(DOMXPath $xpath): void
+    {
+        foreach ($xpath->query('//*[@style]') ?: [] as $element) {
+            if (!$element instanceof DOMElement) {
+                continue;
+            }
+
+            $style = $element->getAttribute('style');
+            $repaired = $this->repair_css_font_sizes($style);
+            if ($repaired === $style) {
+                continue;
+            }
+
+            $element->setAttribute('style', $repaired);
+            $element->setAttribute('data-freego-wp-repaired', trim($element->getAttribute('data-freego-wp-repaired') . ' CS2140401C'));
+        }
+
+        foreach ($xpath->query('//style') ?: [] as $style_element) {
+            if (!$style_element instanceof DOMElement) {
+                continue;
+            }
+
+            $css = $style_element->textContent;
+            $repaired = $this->repair_css_font_sizes($css);
+            if ($repaired === $css) {
+                continue;
+            }
+
+            $style_element->nodeValue = '';
+            $style_element->appendChild($style_element->ownerDocument->createTextNode($repaired));
+            $style_element->setAttribute('data-freego-wp-repaired', trim($style_element->getAttribute('data-freego-wp-repaired') . ' CS2140401C'));
+        }
+    }
+
+    private function px_to_rem(float $px): string
+    {
+        if ($px == 0.0) {
+            return '0';
+        }
+
+        $rem = round($px / 16, 4);
+        return rtrim(rtrim((string) $rem, '0'), '.') . 'rem';
+    }
+
+    private function rewrite_css_urls(string $css, string $stylesheet_url): string
+    {
+        $base = trailingslashit(dirname($stylesheet_url));
+
+        return preg_replace_callback(
+            '/url\(\s*([\'"]?)([^\'")]+)\1\s*\)/i',
+            static function (array $matches) use ($base): string {
+                $url = trim($matches[2]);
+                if ($url === '' || preg_match('/^(data:|https?:|\/\/|\/|#)/i', $url)) {
+                    return $matches[0];
+                }
+
+                return 'url("' . esc_url_raw($base . $url) . '")';
+            },
+            $css
+        ) ?? $css;
+    }
+
     private function repair_images(DOMXPath $xpath): void
     {
         foreach ($xpath->query('//img[not(ancestor::template) and not(ancestor::slot)]') ?: [] as $image) {
@@ -104,14 +384,20 @@ final class Freego_WP_Output_Repair
             }
 
             if (!$image->hasAttribute('alt')) {
-                $image->setAttribute('alt', $this->aggressive_repair ? __('image', 'freego-wp') : '');
+                $inferred = $this->infer_image_alt($image);
+                $image->setAttribute('alt', $inferred !== '' ? $inferred : ($this->aggressive_repair ? __('image', 'freego-wp') : ''));
                 $image->setAttribute('data-freego-wp-needs-alt-review', '1');
                 $image->setAttribute('data-freego-wp-repaired', trim($image->getAttribute('data-freego-wp-repaired') . ' HM1110100C'));
                 continue;
             }
 
-            if ($this->aggressive_repair && trim($image->getAttribute('alt')) === '' && !$image->hasAttribute('title')) {
-                $image->setAttribute('alt', __('image', 'freego-wp'));
+            if (trim($image->getAttribute('alt')) === '' && !$image->hasAttribute('title')) {
+                $inferred = $this->infer_image_alt($image);
+                if ($inferred === '' && !$this->aggressive_repair) {
+                    continue;
+                }
+
+                $image->setAttribute('alt', $inferred !== '' ? $inferred : __('image', 'freego-wp'));
                 $image->setAttribute('data-freego-wp-needs-alt-review', '1');
                 $image->setAttribute('data-freego-wp-repaired', trim($image->getAttribute('data-freego-wp-repaired') . ' HM1110100C'));
             }
@@ -146,6 +432,29 @@ final class Freego_WP_Output_Repair
         }
     }
 
+    private function repair_image_maps(DOMXPath $xpath): void
+    {
+        foreach ($xpath->query('//map[not(ancestor::template) and not(ancestor::slot)]//area') ?: [] as $area) {
+            if (!$area instanceof DOMElement || $this->is_hidden($area)) {
+                continue;
+            }
+
+            $alt = trim($area->getAttribute('alt'));
+            if ($alt !== '' || $this->has_accessible_name($area, $xpath)) {
+                continue;
+            }
+
+            $label = trim($area->getAttribute('title'));
+            if ($label === '') {
+                $label = $this->label_from_href($area->getAttribute('href'), __('Map area pending accessibility review', 'freego-wp'));
+            }
+
+            $area->setAttribute('alt', $label);
+            $area->setAttribute('data-freego-wp-needs-alt-review', '1');
+            $area->setAttribute('data-freego-wp-repaired', trim($area->getAttribute('data-freego-wp-repaired') . ' HM1110101C'));
+        }
+    }
+
     private function repair_image_inputs(DOMXPath $xpath): void
     {
         foreach ($xpath->query('//input[translate(@type, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz") = "image"]') ?: [] as $input) {
@@ -163,6 +472,49 @@ final class Freego_WP_Output_Repair
         }
     }
 
+    private function infer_image_alt(DOMElement $image): string
+    {
+        $parent = $image->parentNode;
+        while ($parent instanceof DOMElement && strtolower($parent->tagName) !== 'a') {
+            $parent = $parent->parentNode;
+        }
+
+        if ($parent instanceof DOMElement) {
+            foreach (['aria-label', 'title'] as $attribute) {
+                $value = trim($parent->getAttribute($attribute));
+                if ($value !== '') {
+                    return $value;
+                }
+            }
+
+            $text = trim(preg_replace('/\s+/', ' ', $parent->textContent) ?? '');
+            if ($text !== '') {
+                return $text;
+            }
+
+            $label = $this->label_from_href($parent->getAttribute('href'));
+            if ($label !== '') {
+                return $label;
+            }
+        }
+
+        $article = $this->closest_ancestor($image, 'article');
+        if ($article instanceof DOMElement) {
+            foreach ($article->getElementsByTagName('*') as $candidate) {
+                if (!$candidate instanceof DOMElement || !preg_match('/^h[1-6]$/i', $candidate->tagName)) {
+                    continue;
+                }
+
+                $text = trim(preg_replace('/\s+/', ' ', $candidate->textContent) ?? '');
+                if ($text !== '') {
+                    return $text;
+                }
+            }
+        }
+
+        return '';
+    }
+
     private function repair_links(DOMXPath $xpath): void
     {
         foreach ($xpath->query('//a[@href]') ?: [] as $link) {
@@ -170,7 +522,8 @@ final class Freego_WP_Output_Repair
                 continue;
             }
 
-            $text = trim(preg_replace('/\s+/', ' ', $link->textContent) ?? '');
+            $visible_text = trim(preg_replace('/\s+/', ' ', $link->textContent) ?? '');
+            $text = $visible_text;
             $title = trim($link->getAttribute('title'));
 
             if ($text === '') {
@@ -180,9 +533,29 @@ final class Freego_WP_Output_Repair
                 }
             }
 
+            if ($text === '' && $title !== '') {
+                $link->setAttribute('aria-label', $title);
+                $link->setAttribute('data-freego-wp-repaired', trim($link->getAttribute('data-freego-wp-repaired') . ' HM1240401C'));
+                continue;
+            }
+
             if ($title === '' && $text !== '') {
                 $link->setAttribute('title', $text);
                 $link->setAttribute('data-freego-wp-repaired', trim($link->getAttribute('data-freego-wp-repaired') . ' HM3240900C'));
+            }
+
+            if ($visible_text !== '') {
+                foreach ($link->getElementsByTagName('img') as $image) {
+                    if (!$image instanceof DOMElement || $this->is_hidden($image)) {
+                        continue;
+                    }
+
+                    if (trim($image->getAttribute('alt')) === $visible_text) {
+                        $image->setAttribute('alt', '');
+                        $image->setAttribute('data-freego-wp-needs-alt-review', '1');
+                        $image->setAttribute('data-freego-wp-repaired', trim($image->getAttribute('data-freego-wp-repaired') . ' HM1240400C'));
+                    }
+                }
             }
 
             if ($text === '' && $title === '') {
@@ -193,6 +566,50 @@ final class Freego_WP_Output_Repair
                     $link->setAttribute('data-freego-wp-repaired', trim($link->getAttribute('data-freego-wp-repaired') . ' HM1240401C'));
                 }
                 $link->setAttribute('data-freego-wp-needs-link-review', '1');
+            }
+        }
+    }
+
+    private function repair_buttons(DOMXPath $xpath): void
+    {
+        foreach ($xpath->query('//button') ?: [] as $button) {
+            if (
+                !$button instanceof DOMElement ||
+                $this->is_hidden($button) ||
+                trim(preg_replace('/\s+/', ' ', $button->textContent) ?? '') !== '' ||
+                $this->has_accessible_name($button, $xpath)
+            ) {
+                continue;
+            }
+
+            $label = $this->label_from_classes($button->getAttribute('class'));
+            if ($label === '') {
+                $label = $this->button_label_from_context($button);
+            }
+
+            if ($label === '') {
+                if (!$this->aggressive_repair) {
+                    $button->setAttribute('data-freego-wp-needs-name-review', '1');
+                    continue;
+                }
+                $label = __('button', 'freego-wp');
+            }
+
+            $button->setAttribute('aria-label', $label);
+            $button->setAttribute('data-freego-wp-needs-name-review', '1');
+            $button->setAttribute('data-freego-wp-repaired', trim($button->getAttribute('data-freego-wp-repaired') . ' HM1410200C'));
+        }
+    }
+
+    private function repair_navigation_landmarks(DOMXPath $xpath): void
+    {
+        foreach ($xpath->query('//nav[not(ancestor::template) and not(ancestor::slot)]') ?: [] as $nav) {
+            if (!$nav instanceof DOMElement || $this->is_hidden($nav) || $this->has_element_children($nav)) {
+                continue;
+            }
+
+            if ($nav->parentNode) {
+                $nav->parentNode->removeChild($nav);
             }
         }
     }
@@ -214,6 +631,18 @@ final class Freego_WP_Output_Repair
 
     private function repair_forms(DOMDocument $document, DOMXPath $xpath): void
     {
+        foreach ($xpath->query('//input[translate(@type, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz") = "button"]') ?: [] as $button_input) {
+            if (!$button_input instanceof DOMElement || $this->is_hidden($button_input)) {
+                continue;
+            }
+
+            if (trim($button_input->getAttribute('value')) === '') {
+                $button_input->setAttribute('value', $this->field_label($button_input));
+                $button_input->setAttribute('data-freego-wp-needs-name-review', '1');
+                $button_input->setAttribute('data-freego-wp-repaired', trim($button_input->getAttribute('data-freego-wp-repaired') . ' HM1410200C'));
+            }
+        }
+
         foreach ($xpath->query('//input[not(@type) or not(translate(@type, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz") = "hidden" or translate(@type, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz") = "submit" or translate(@type, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz") = "button" or translate(@type, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz") = "image")] | //textarea | //select') ?: [] as $control) {
             if (!$control instanceof DOMElement || $this->is_hidden($control)) {
                 continue;
@@ -237,6 +666,18 @@ final class Freego_WP_Output_Repair
             if ($control->parentNode) {
                 $control->parentNode->insertBefore($label, $control);
             }
+        }
+
+        foreach ($xpath->query('//fieldset[not(legend)]') ?: [] as $fieldset) {
+            if (!$fieldset instanceof DOMElement || $this->is_hidden($fieldset)) {
+                continue;
+            }
+
+            $legend = $document->createElement('legend', $this->legend_label($fieldset));
+            $legend->setAttribute('class', 'freego-wp-sr-only');
+            $legend->setAttribute('data-freego-wp-needs-legend-review', '1');
+            $fieldset->insertBefore($legend, $fieldset->firstChild);
+            $fieldset->setAttribute('data-freego-wp-repaired', trim($fieldset->getAttribute('data-freego-wp-repaired') . ' HM1130103C'));
         }
     }
 
@@ -273,12 +714,24 @@ final class Freego_WP_Output_Repair
 
     private function repair_embeds(DOMDocument $document, DOMXPath $xpath): void
     {
-        foreach ($xpath->query('//object | //embed | //applet') ?: [] as $embed) {
+        foreach ($xpath->query('//applet') ?: [] as $applet) {
+            if (!$applet instanceof DOMElement || $this->is_hidden($applet) || trim($applet->getAttribute('alt')) !== '') {
+                continue;
+            }
+
+            if ($this->aggressive_repair) {
+                $applet->setAttribute('alt', __('embedded content', 'freego-wp'));
+                $applet->setAttribute('data-freego-wp-repaired', trim($applet->getAttribute('data-freego-wp-repaired') . ' HM1110105C'));
+            }
+            $applet->setAttribute('data-freego-wp-needs-embed-review', '1');
+        }
+
+        foreach ($xpath->query('//object | //embed') ?: [] as $embed) {
             if (!$embed instanceof DOMElement || $this->is_hidden($embed)) {
                 continue;
             }
 
-            if (trim($embed->textContent) !== '' || $this->has_accessible_name($embed, $xpath)) {
+            if ($this->has_object_fallback_content($embed) || $this->has_accessible_name($embed, $xpath)) {
                 continue;
             }
 
@@ -321,6 +774,36 @@ final class Freego_WP_Output_Repair
             }
             $previous = $level;
         }
+    }
+
+    private function repair_headings(DOMDocument $document, DOMXPath $xpath): void
+    {
+        foreach ($xpath->query('//h1[not(normalize-space())] | //h2[not(normalize-space())] | //h3[not(normalize-space())] | //h4[not(normalize-space())] | //h5[not(normalize-space())] | //h6[not(normalize-space())]') ?: [] as $heading) {
+            if ($heading instanceof DOMElement && $heading->parentNode) {
+                $heading->parentNode->removeChild($heading);
+            }
+        }
+
+        $headings = $xpath->query('//h1 | //h2 | //h3 | //h4 | //h5 | //h6');
+        if ($headings && $headings->length > 0) {
+            return;
+        }
+
+        $body = $document->getElementsByTagName('body')->item(0);
+        if (!$body instanceof DOMElement) {
+            return;
+        }
+
+        $title = $document->getElementsByTagName('title')->item(0);
+        $text = $title instanceof DOMElement ? trim($title->textContent) : '';
+        if ($text === '') {
+            $text = get_bloginfo('name') ?: __('Page', 'freego-wp');
+        }
+
+        $h1 = $document->createElement('h1', $text);
+        $h1->setAttribute('class', 'freego-wp-sr-only');
+        $h1->setAttribute('data-freego-wp-repaired', 'HM1130100C HM3241000C');
+        $body->insertBefore($h1, $body->firstChild);
     }
 
     private function ensure_skip_link(DOMDocument $document, DOMXPath $xpath): void
@@ -396,6 +879,41 @@ final class Freego_WP_Output_Repair
         return false;
     }
 
+    private function has_object_fallback_content(DOMElement $element): bool
+    {
+        $tag = strtolower($element->tagName);
+        if ($tag === 'embed') {
+            return trim($element->textContent) !== '';
+        }
+
+        foreach ($element->childNodes as $child) {
+            if ($child instanceof DOMText && trim($child->wholeText) !== '') {
+                return true;
+            }
+
+            if (!$child instanceof DOMElement) {
+                continue;
+            }
+
+            if (strtolower($child->tagName) !== 'param') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function has_element_children(DOMElement $element): bool
+    {
+        foreach ($element->childNodes as $child) {
+            if ($child instanceof DOMElement) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private function field_label(DOMElement $control): string
     {
         $placeholder = trim($control->getAttribute('placeholder'));
@@ -411,6 +929,26 @@ final class Freego_WP_Output_Repair
         return __('Field pending accessibility review', 'freego-wp');
     }
 
+    private function legend_label(DOMElement $fieldset): string
+    {
+        $class = strtolower($fieldset->getAttribute('class'));
+        if (strpos($class, 'hidden-fields-container') !== false) {
+            return __('Hidden form fields', 'freego-wp');
+        }
+
+        $form = $this->closest_ancestor($fieldset, 'form');
+        if ($form instanceof DOMElement) {
+            foreach (['aria-label', 'title', 'name', 'id'] as $attribute) {
+                $value = trim($form->getAttribute($attribute));
+                if ($value !== '') {
+                    return ucwords(str_replace(['_', '-'], ' ', $value));
+                }
+            }
+        }
+
+        return __('Form fields', 'freego-wp');
+    }
+
     private function label_from_href(string $href, string $fallback = ''): string
     {
         $path = trim((string) wp_parse_url($href, PHP_URL_PATH), '/');
@@ -420,6 +958,64 @@ final class Freego_WP_Output_Repair
         }
 
         return $fallback !== '' ? $fallback : __('Link pending accessibility review', 'freego-wp');
+    }
+
+    private function label_from_classes(string $class): string
+    {
+        $class = strtolower($class);
+
+        if (preg_match('/\b(close|dismiss)\b|closeicon/', $class)) {
+            return __('close', 'freego-wp');
+        }
+
+        if (preg_match('/\b(menu|submenu|toggle|expand)\b/', $class)) {
+            return __('menu', 'freego-wp');
+        }
+
+        if (preg_match('/\b(search)\b/', $class)) {
+            return __('search', 'freego-wp');
+        }
+
+        return '';
+    }
+
+    private function closest_ancestor(DOMElement $element, string $tag): ?DOMElement
+    {
+        $tag = strtolower($tag);
+        $parent = $element->parentNode;
+        while ($parent instanceof DOMElement) {
+            if (strtolower($parent->tagName) === $tag) {
+                return $parent;
+            }
+            $parent = $parent->parentNode;
+        }
+
+        return null;
+    }
+
+    private function normalize_lang(string $lang): string
+    {
+        return strtolower(str_replace('_', '-', trim($lang)));
+    }
+
+    private function button_label_from_context(DOMElement $button): string
+    {
+        foreach (['title', 'aria-label'] as $attribute) {
+            $value = trim($button->getAttribute($attribute));
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        $parent = $button->parentNode;
+        if (!$parent instanceof DOMElement) {
+            return '';
+        }
+
+        $text = trim(preg_replace('/\s+/', ' ', $parent->textContent) ?? '');
+        $length = function_exists('mb_strlen') ? mb_strlen($text) : strlen($text);
+
+        return $text !== '' && $length <= 80 ? $text : '';
     }
 
     private function infer_th_scope(DOMElement $header): string

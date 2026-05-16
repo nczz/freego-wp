@@ -79,6 +79,7 @@ final class Freego_WP_Plugin
                 'submit' => __('submit', 'freego-wp'),
                 'field' => __('field', 'freego-wp'),
                 'options' => __('options', 'freego-wp'),
+                'button' => __('button', 'freego-wp'),
             ],
         ]);
     }

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.7
+
+- Expand Freego output-buffer repair coverage for additional checker predicates.
+- Add scoped CSS font-size px-to-rem repair for allowlisted same-origin stylesheets and inline styles.
+- Add repair coverage for image maps, buttons, fieldsets, document headings, language sections, empty navigation landmarks, and duplicate linked image alt text.
+- Document the output-buffer repair map under `docs/freego-ob-repair-map.md`.
+
 ## 0.1.6
 
 - Add same-origin iframe content repair from the frontend runtime.

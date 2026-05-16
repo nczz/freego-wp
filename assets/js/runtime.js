@@ -5,7 +5,7 @@
     var config = window.FreegoWP || {};
     var aggressiveRepair = !!config.aggressiveRepair;
     var fallbacks = config.fallbacks || {};
-    var repairCandidateSelector = 'img, [role="img"]:not(svg), a[href], iframe, input, textarea, select, table, th, object, embed, applet, h1, h2, h3, h4, h5, h6, [aria-expanded]';
+    var repairCandidateSelector = 'img, [role="img"]:not(svg), a[href], button, iframe, input, textarea, select, table, th, object, embed, applet, h1, h2, h3, h4, h5, h6, [aria-expanded]';
     var observedDocuments = [];
 
     function hasText(value) {
@@ -51,6 +51,24 @@
         }
 
         return fallbacks.link || 'link';
+    }
+
+    function labelFromClasses(className) {
+        className = String(className || '').toLowerCase();
+
+        if (/\b(close|dismiss)\b|closeicon/.test(className)) {
+            return 'close';
+        }
+
+        if (/\b(menu|submenu|toggle|expand)\b/.test(className)) {
+            return 'menu';
+        }
+
+        if (/\bsearch\b/.test(className)) {
+            return 'search';
+        }
+
+        return '';
     }
 
     function hasAccessibleName(element) {
@@ -125,7 +143,8 @@
                 return;
             }
 
-            var text = link.textContent.replace(/\s+/g, ' ').trim();
+            var visibleText = link.textContent.replace(/\s+/g, ' ').trim();
+            var text = visibleText;
             var image = link.querySelector('img[alt]');
             if (!hasText(text) && image) {
                 text = image.getAttribute('alt').trim();
@@ -133,6 +152,21 @@
 
             if (hasText(text) && !hasText(link.getAttribute('title'))) {
                 link.setAttribute('title', text);
+            }
+
+            if (hasText(visibleText)) {
+                link.querySelectorAll('img[alt]').forEach(function (imageNode) {
+                    if (!isHidden(imageNode) && imageNode.getAttribute('alt').trim() === visibleText) {
+                        imageNode.setAttribute('alt', '');
+                        imageNode.setAttribute('data-freego-wp-needs-alt-review', '1');
+                    }
+                });
+            }
+
+            if (!hasText(text) && hasText(link.getAttribute('title'))) {
+                link.setAttribute('aria-label', link.getAttribute('title').trim());
+                link.setAttribute('data-freego-wp-needs-link-review', '1');
+                return;
             }
 
             if (!hasText(text) && !hasAccessibleName(link)) {
@@ -143,6 +177,34 @@
                 }
                 link.setAttribute('data-freego-wp-needs-link-review', '1');
             }
+        });
+    }
+
+    function repairButtons(root) {
+        scopedElements(root, 'button:not([' + reviewedAttr + '])').forEach(function (button) {
+            button.setAttribute(reviewedAttr, '1');
+            if (isHidden(button) || hasText(button.textContent) || hasAccessibleName(button)) {
+                return;
+            }
+
+            var label = labelFromClasses(button.className);
+            if (!hasText(label) && button.parentElement) {
+                var text = button.parentElement.textContent.replace(/\s+/g, ' ').trim();
+                if (text.length > 0 && text.length <= 80) {
+                    label = text;
+                }
+            }
+
+            if (!hasText(label)) {
+                if (!aggressiveRepair) {
+                    button.setAttribute('data-freego-wp-needs-name-review', '1');
+                    return;
+                }
+                label = fallbacks.button || 'button';
+            }
+
+            button.setAttribute('aria-label', label);
+            button.setAttribute('data-freego-wp-needs-name-review', '1');
         });
     }
 
@@ -325,6 +387,7 @@
         root = root || document;
         repairImages(root);
         repairLinks(root);
+        repairButtons(root);
         repairIframes(root);
         repairControls(root);
         repairTables(root);
