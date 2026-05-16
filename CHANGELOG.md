@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.6
+
+- Add same-origin iframe content repair from the frontend runtime.
+- Observe iframe load events so nested same-origin documents loaded after initial render are scanned and repaired.
+- Mark cross-origin frames as externally bounded because browser security prevents parent-page DOM repair inside them.
+
 ## 0.1.5
 
 - Strengthen frontend runtime repair for browser-rendered DOM changes.

@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: Freego WP Accessibility Assistant 0.1.5\n"
+"Project-Id-Version: Freego WP Accessibility Assistant 0.1.6\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/freego-wp\n"
 "Last-Translator: MXP <im@mxp.tw>\n"
 "Language-Team: Traditional Chinese <zh_TW@li.org>\n"

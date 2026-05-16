@@ -53,6 +53,11 @@ Freego rule -> failing selector/condition -> scoped repair or marker -> review w
 
 前端 runtime 使用 `MutationObserver` 監看 `childList`、文字變更，以及 `alt`、`title`、`aria-label`、`aria-labelledby`、`href`、`src`、`role`、`scope` 等無障礙相關屬性。每次只重新評估受影響的元素或子樹，不做全頁無差別覆寫。
 
+巢狀 DOM 會依子樹範圍處理。iframe 則分為兩種：
+
+- 同源 iframe：外層 runtime 可進入 `contentDocument`，對 iframe 內部文件套用同一套掃描、修補與 MutationObserver。
+- 跨來源 iframe：瀏覽器安全模型禁止父頁讀寫內部 DOM，外掛只能修補外層 `<iframe>` 的 `title` 等屬性，並標記 `data-freego-wp-cross-origin-frame="1"` 作為人工或來源端處理邊界。
+
 例如：
 
 ```html
