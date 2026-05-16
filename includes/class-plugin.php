@@ -80,6 +80,10 @@ final class Freego_WP_Plugin
                 'field' => __('field', 'freego-wp'),
                 'options' => __('options', 'freego-wp'),
                 'button' => __('button', 'freego-wp'),
+                /* translators: %s: social network or sharing service name. */
+                'shareOn' => __('Share on %s', 'freego-wp'),
+                /* translators: %s: saving or bookmarking service name. */
+                'saveTo' => __('Save to %s', 'freego-wp'),
             ],
         ]);
     }

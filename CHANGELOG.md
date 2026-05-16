@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.11
+
+- Improve icon-only social/share link naming in output-buffer and runtime repairs.
+- Remove invalid empty descendant `lang` attributes instead of copying the root language.
+- Localize share/save fallback label templates for frontend runtime repairs.
+
 ## 0.1.10
 
 - Add Freego v3 bytecode predicate matrix documentation.

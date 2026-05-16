@@ -123,7 +123,7 @@ final class Freego_WP_Output_Repair
 
             $lang = trim($element->getAttribute('lang'));
             if ($lang === '') {
-                $element->setAttribute('lang', $page_lang);
+                $element->removeAttribute('lang');
                 $element->setAttribute('data-freego-wp-repaired', trim($element->getAttribute('data-freego-wp-repaired') . ' HM2310200C'));
                 continue;
             }
@@ -679,6 +679,14 @@ final class Freego_WP_Output_Repair
             }
 
             if ($text === '' && $title === '') {
+                $label = $this->label_from_link_context($link);
+                if ($label !== '') {
+                    $link->setAttribute('aria-label', $label);
+                    $link->setAttribute('title', $label);
+                    $link->setAttribute('data-freego-wp-repaired', trim($link->getAttribute('data-freego-wp-repaired') . ' HM1240401C'));
+                    continue;
+                }
+
                 if ($this->aggressive_repair) {
                     $label = $this->label_from_href($link->getAttribute('href'), __('link', 'freego-wp'));
                     $link->setAttribute('aria-label', $label);
@@ -1119,6 +1127,99 @@ final class Freego_WP_Output_Repair
         }
 
         return '';
+    }
+
+    private function label_from_link_context(DOMElement $link): string
+    {
+        $href = strtolower(html_entity_decode($link->getAttribute('href'), ENT_QUOTES));
+
+        $service = $this->service_label_from_href($href);
+        if ($service !== '') {
+            if (preg_match('/(?:^|[\/?&=._-])(share|sharer|sharearticle|submit|pin|send)(?:$|[\/?&=._-])/', $href)) {
+                /* translators: %s: social network or sharing service name. */
+                return sprintf(__('Share on %s', 'freego-wp'), $service);
+            }
+
+            if (preg_match('/(?:^|[\/?&=._-])(save|bookmark)(?:$|[\/?&=._-])/', $href)) {
+                /* translators: %s: saving or bookmarking service name. */
+                return sprintf(__('Save to %s', 'freego-wp'), $service);
+            }
+        }
+
+        $token = $this->semantic_token_from_classes($link);
+        if ($token !== '') {
+            return $token;
+        }
+
+        return '';
+    }
+
+    private function service_label_from_href(string $href): string
+    {
+        $host = (string) wp_parse_url($href, PHP_URL_HOST);
+        if (strpos($href, 'whatsapp:') === 0) {
+            $host = 'whatsapp';
+        }
+
+        $host = preg_replace('/^www\./', '', strtolower($host)) ?? '';
+        if ($host === '') {
+            return '';
+        }
+
+        $labels = [
+            'x.com' => 'X',
+            'twitter.com' => 'Twitter',
+            'facebook.com' => 'Facebook',
+            'pinterest.com' => 'Pinterest',
+            'linkedin.com' => 'LinkedIn',
+            'tumblr.com' => 'Tumblr',
+            'reddit.com' => 'Reddit',
+            'getpocket.com' => 'Pocket',
+            'vk.com' => 'VKontakte',
+            'ok.ru' => 'OK',
+            'connect.ok.ru' => 'OK',
+            'whatsapp' => 'WhatsApp',
+        ];
+
+        foreach ($labels as $domain => $label) {
+            if ($host === $domain || substr($host, -strlen('.' . $domain)) === '.' . $domain) {
+                return $label;
+            }
+        }
+
+        $parts = explode('.', $host);
+        $base = $parts[0] ?? '';
+
+        return $base !== '' ? ucwords(str_replace(['-', '_'], ' ', $base)) : '';
+    }
+
+    private function semantic_token_from_classes(DOMElement $element): string
+    {
+        $tokens = [];
+        $current = $element;
+
+        while ($current instanceof DOMElement) {
+            foreach (preg_split('/\s+/', strtolower($current->getAttribute('class'))) ?: [] as $class) {
+                foreach (preg_split('/[-_]+/', $class) ?: [] as $part) {
+                    $part = trim($part);
+                    if ($part === '' || in_array($part, ['a', 'link', 'links', 'icon', 'icons', 'social', 'share', 'sharing', 'button', 'btn', 'tfm', 'cmswt'], true)) {
+                        continue;
+                    }
+
+                    if (preg_match('/^[a-z][a-z0-9]{1,24}$/', $part)) {
+                        $tokens[] = $part;
+                    }
+                }
+            }
+
+            $current = $current->parentNode instanceof DOMElement ? $current->parentNode : null;
+        }
+
+        if (!$tokens) {
+            return '';
+        }
+
+        return ucwords(str_replace(['-', '_'], ' ', $tokens[0]));
     }
 
     private function closest_ancestor(DOMElement $element, string $tag): ?DOMElement

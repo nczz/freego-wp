@@ -30,12 +30,12 @@ Common skip logic seen across DOM rules: descendants of `template` or `slot` are
 | HM1240102C | Visible `nav` elements fail when empty. | `repair`: remove empty visible nav elements. |
 | HM1240200C | Direct `head > title` must exist and be non-empty; title under svg/iframe is ignored. | `repair`: create/fill head title from WordPress document title/site name. |
 | HM1240400C | In a text link containing images, image `alt` must not duplicate the same link text. | `repair_then_review`: clear linked image alt when it exactly equals visible link text. |
-| HM1240401C | `a[href]` needs link text, `aria-label`, non-empty linked image alt, or named svg role image. | `repair_then_review`: add aria-label from title/href, infer linked image alt, mark uncertain links. |
+| HM1240401C | `a[href]` needs link text, `aria-label`, non-empty linked image alt, or named svg role image. | `repair_then_review`: add aria-label from title, generic share/save URL purpose, class tokens, or href fallback; infer linked image alt; mark uncertain links. |
 | HM1310100C | Root `html` needs non-empty `lang`. | `repair`: fill from WordPress locale. |
 | HM1410100C | Flags invalid/deprecated elements and W3C conformance concerns. | `report`: requires validator-level proof; OB avoids producing invalid markup. |
 | HM1410200C | Controls and links need valid roles/names; button text/ARIA/image alt, input button value, links/areas href/name cases are checked. | `repair_then_review`: name icon buttons, fill input button values, repair links/areas where deterministic. |
 | HM1410201C | `frame` and `iframe` need non-empty `title`. | `repair_then_review`: aggressive fallback title; mark review. |
-| HM2310200C | Root/body language handling; descendant `lang=""` fails and descendant same as root lang fails. | `repair`: fill empty lang from root, remove redundant same-as-root lang. |
+| HM2310200C | Root/body language handling; descendant `lang=""` fails and descendant same as root lang fails. | `repair`: remove empty descendant lang and redundant same-as-root lang so same-language content is not falsely declared as a different-language section. |
 | HM3240900C | AAA link purpose: `a[href]` needs link text and non-empty `title`; image links need title/alt handling. | `repair_then_review`: mirror visible link text to title; icon-only follows A-level link-name repair. |
 | HM3241000C | AAA headings are expected to organize sections. | `repair_then_review`: missing heading gets hidden h1; hierarchy remains review. |
 | HM3330500C | AAA contextual help via `title`; bytecode class has no extra selector logic beyond metadata, but reports overlap form controls. | `repair_then_review`: fill missing form-control title from label inference. |
@@ -53,4 +53,3 @@ Common skip logic seen across DOM rules: descendants of `template` or `slot` are
 - icon-only link naming from title
 - icon-only button naming from class
 - descendant empty `lang` repair
-

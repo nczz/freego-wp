@@ -71,6 +71,101 @@
         return '';
     }
 
+    function labelFromLinkContext(link) {
+        var href = String(link.getAttribute('href') || '').toLowerCase();
+        var service = serviceLabelFromHref(href);
+        if (hasText(service)) {
+            if (/(^|[/?&=._-])(share|sharer|sharearticle|submit|pin|send)($|[/?&=._-])/.test(href)) {
+                return formatServiceLabel(fallbacks.shareOn || 'Share on %s', service);
+            }
+
+            if (/(^|[/?&=._-])(save|bookmark)($|[/?&=._-])/.test(href)) {
+                return formatServiceLabel(fallbacks.saveTo || 'Save to %s', service);
+            }
+        }
+
+        return semanticTokenFromClasses(link);
+    }
+
+    function formatServiceLabel(template, service) {
+        return String(template || '').indexOf('%s') !== -1
+            ? String(template).replace('%s', service)
+            : String(template || '') + ' ' + service;
+    }
+
+    function serviceLabelFromHref(href) {
+        if (href.indexOf('whatsapp:') === 0) {
+            return 'WhatsApp';
+        }
+
+        var host = '';
+        try {
+            host = new URL(href, window.location.href).hostname.toLowerCase().replace(/^www\./, '');
+        } catch (error) {
+            return '';
+        }
+
+        var labels = {
+            'x.com': 'X',
+            'twitter.com': 'Twitter',
+            'facebook.com': 'Facebook',
+            'pinterest.com': 'Pinterest',
+            'linkedin.com': 'LinkedIn',
+            'tumblr.com': 'Tumblr',
+            'reddit.com': 'Reddit',
+            'getpocket.com': 'Pocket',
+            'vk.com': 'VKontakte',
+            'ok.ru': 'OK',
+            'connect.ok.ru': 'OK'
+        };
+
+        for (var domain in labels) {
+            if (Object.prototype.hasOwnProperty.call(labels, domain) && (host === domain || host.slice(-(domain.length + 1)) === '.' + domain)) {
+                return labels[domain];
+            }
+        }
+
+        return host.split('.')[0].replace(/[-_]+/g, ' ').replace(/\b\w/g, function (letter) {
+            return letter.toUpperCase();
+        });
+    }
+
+    function semanticTokenFromClasses(element) {
+        var ignored = {
+            a: true,
+            link: true,
+            links: true,
+            icon: true,
+            icons: true,
+            social: true,
+            share: true,
+            sharing: true,
+            button: true,
+            btn: true,
+            tfm: true,
+            cmswt: true
+        };
+        var current = element;
+
+        while (current && current.nodeType === 1) {
+            var classes = String(current.className || '').toLowerCase().split(/\s+/);
+            for (var i = 0; i < classes.length; i++) {
+                var parts = classes[i].split(/[-_]+/);
+                for (var j = 0; j < parts.length; j++) {
+                    var token = parts[j].trim();
+                    if (/^[a-z][a-z0-9]{1,24}$/.test(token) && !ignored[token]) {
+                        return token.replace(/\b\w/g, function (letter) {
+                            return letter.toUpperCase();
+                        });
+                    }
+                }
+            }
+            current = current.parentElement;
+        }
+
+        return '';
+    }
+
     function hasAccessibleName(element) {
         if (hasText(element.getAttribute('aria-label')) || hasText(element.getAttribute('title')) || hasText(element.getAttribute('alt'))) {
             return true;
@@ -170,8 +265,15 @@
             }
 
             if (!hasText(text) && !hasAccessibleName(link)) {
+                var label = labelFromLinkContext(link);
+                if (hasText(label)) {
+                    link.setAttribute('aria-label', label);
+                    link.setAttribute('title', label);
+                    return;
+                }
+
                 if (aggressiveRepair) {
-                    var label = labelFromUrl(link.getAttribute('href'));
+                    label = labelFromUrl(link.getAttribute('href'));
                     link.setAttribute('aria-label', label);
                     link.setAttribute('title', label);
                 }

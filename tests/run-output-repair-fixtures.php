@@ -102,6 +102,7 @@ $html = '<html><head><title>Fixture</title>'
     . '</head><body>'
     . '<select name="swifts" id="mxp-swifts"><option value="">Choose SWIFT/BIC region</option></select>'
     . '<a href="#" class="cmswt-InstantSearchPopup--closeIcon" title="close"><svg role="img"></svg></a>'
+    . '<li class="tfm-social-icon twitter"><a class="tfm-social-link" rel="nofollow" href="https://twitter.com/share?url=https://example.test/" target="_blank"><span><i class="icon-twitter"></i></span></a></li>'
     . '<button class="submenu-expand" tabindex="-1"><svg aria-hidden="true"></svg></button>'
     . '<bdo lang="">text</bdo>'
     . '</body></html>';
@@ -117,8 +118,10 @@ assert_contains('for="mxp-swifts"', $output, 'select label');
 assert_contains('title="Choose SWIFT/BIC region"', $output, 'select title');
 assert_contains('aria-label="Choose SWIFT/BIC region"', $output, 'select aria-label');
 assert_contains('aria-label="close"', $output, 'icon link aria-label');
+assert_contains('aria-label="Share on Twitter"', $output, 'social share link aria-label');
 assert_contains('aria-label="menu"', $output, 'icon button aria-label');
-assert_contains('<bdo lang="zh-TW"', $output, 'empty lang repaired');
+assert_contains('<bdo data-freego-wp-repaired="HM2310200C"', $output, 'empty lang removed');
+assert_not_contains('<bdo lang=', $output, 'empty lang must not become root lang');
 assert_not_contains('<link rel="stylesheet"', $output, 'stylesheet links replaced');
 
 echo "Output repair fixtures passed\n";
