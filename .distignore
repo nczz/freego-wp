@@ -1,0 +1,12 @@
+.git/
+.github/
+.gitignore
+.DS_Store
+node_modules/
+vendor/
+dist/
+build/
+coverage/
+*.log
+*.zip
+tools/

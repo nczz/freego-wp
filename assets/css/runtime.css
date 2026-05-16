@@ -1,0 +1,36 @@
+.freego-wp-skip-link {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 100000;
+    padding: 8px 12px;
+    background: #111;
+    color: #fff;
+    text-decoration: none;
+    transform: translateY(-150%);
+}
+
+.freego-wp-skip-link:focus {
+    transform: translateY(0);
+}
+
+.freego-wp-sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 3px solid #005fcc;
+    outline-offset: 2px;
+}
+
+:where(body) {
+    line-height: 1.5;
+}
