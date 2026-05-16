@@ -198,13 +198,15 @@
     function repairImages(root) {
         scopedElements(root, 'img:not([' + reviewedAttr + '])').forEach(function (image) {
             image.setAttribute(reviewedAttr, '1');
-            if (isHidden(image)) {
-                return;
-            }
 
             if (!image.hasAttribute('alt')) {
                 image.setAttribute('alt', aggressiveRepair ? (fallbacks.image || 'image') : '');
                 image.setAttribute('data-freego-wp-needs-alt-review', '1');
+                return;
+            }
+
+            if (isHidden(image)) {
+                return;
             } else if (aggressiveRepair && image.getAttribute('alt').trim() === '' && !image.hasAttribute('title')) {
                 image.setAttribute('alt', fallbacks.image || 'image');
                 image.setAttribute('data-freego-wp-needs-alt-review', '1');

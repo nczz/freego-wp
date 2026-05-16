@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.12
+
+- Adjust runtime image repair so missing `alt` attributes are added before hidden-state review.
+- Keep subsequent semantic image review handling scoped to visible images.
+
 ## 0.1.11
 
 - Improve icon-only social/share link naming in output-buffer and runtime repairs.
