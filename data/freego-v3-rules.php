@@ -244,9 +244,9 @@ return [
         'guideline' => '1.4.8',
         'web_id' => 1531,
         'description' => '需有CSS樣式規則使用百分比數值或相對長度單位來設定欄寬，且最大欄寬不得超過80個字母(中日韓語系的40個文字)',
-        'automation' => 'report_only',
-        'surface' => ['css_audit'],
-        'notes' => 'Report CSS source; automatic layout rewriting may break sites.',
+        'automation' => 'repair_then_review',
+        'surface' => ['output_buffer', 'css_audit'],
+        'notes' => 'OB converts absolute max-width units to rem in inline styles and same-origin local external CSS; broader layout rewriting remains high risk.',
     ],
     'CS3140802C' => [
         'level' => 'AAA',
@@ -254,8 +254,8 @@ return [
         'web_id' => 1532,
         'description' => '需有CSS樣式規則指定行距',
         'automation' => 'repair_then_review',
-        'surface' => ['runtime_css', 'css_audit'],
-        'notes' => 'Runtime baseline line-height can help; theme CSS should be audited.',
+        'surface' => ['output_buffer', 'runtime_css', 'css_audit'],
+        'notes' => 'OB converts absolute line-height units to rem in inline styles and same-origin local external CSS; theme typography should still be reviewed.',
     ],
     'HM3240900C' => [
         'level' => 'AAA',
@@ -282,7 +282,7 @@ return [
         'description' => '使用標題(title)屬性來提供針對脈絡而作的協助說明',
         'automation' => 'repair_then_review',
         'surface' => ['output_buffer', 'forms'],
-        'notes' => 'Can add titles from labels/placeholders; final help text needs review.',
+        'notes' => 'Can add titles from labels/placeholders/select option prompts; final help text needs review.',
     ],
     'ME1320200C' => [
         'level' => 'A',

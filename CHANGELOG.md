@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.9
+
+- Expand CSS accessibility unit repair to `max-width` and `line-height`.
+- Mark CS3140801C and CS3140802C as output-buffer repair then review targets.
+- Add contextual form control `title` inference for HM3330500C.
+
 ## 0.1.8
 
 - Improve CSS repair handling for same-origin local stylesheets.

@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: Freego WP Accessibility Assistant 0.1.8\n"
+"Project-Id-Version: Freego WP Accessibility Assistant 0.1.9\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/freego-wp\n"
 "Last-Translator: MXP <im@mxp.tw>\n"
 "Language-Team: Traditional Chinese <zh_TW@li.org>\n"
@@ -310,48 +310,48 @@ msgstr "開放格式替代檔"
 msgid "ODF, PDF, or HTML alternative URL for Freego review."
 msgstr "供 Freego 審查使用的 ODF、PDF 或 HTML 替代檔網址。"
 
-#: includes/class-output-repair.php:492
-#: includes/class-output-repair.php:504
-#: includes/class-output-repair.php:511
-#: includes/class-output-repair.php:531
+#: includes/class-output-repair.php:508
+#: includes/class-output-repair.php:520
+#: includes/class-output-repair.php:527
+#: includes/class-output-repair.php:547
 #: includes/class-plugin.php:75
 msgid "image"
 msgstr "圖片"
 
-#: includes/class-output-repair.php:571
+#: includes/class-output-repair.php:587
 #: includes/class-plugin.php:79
 msgid "submit"
 msgstr "送出"
 
-#: includes/class-output-repair.php:667
+#: includes/class-output-repair.php:683
 #: includes/class-plugin.php:76
 msgid "link"
 msgstr "連結"
 
-#: includes/class-output-repair.php:729
+#: includes/class-output-repair.php:745
 #: includes/class-plugin.php:77
 msgid "frame"
 msgstr "框架"
 
-#: includes/class-output-repair.php:827
-#: includes/class-output-repair.php:843
+#: includes/class-output-repair.php:852
+#: includes/class-output-repair.php:868
 #: includes/class-plugin.php:78
 msgid "embedded content"
 msgstr "嵌入內容"
 
-#: includes/class-output-repair.php:931
+#: includes/class-output-repair.php:956
 msgid "Skip to main content"
 msgstr "跳至主要內容"
 
-#: includes/class-output-repair.php:1033
+#: includes/class-output-repair.php:1071
 msgid "Field pending accessibility review"
 msgstr "欄位待無障礙審查"
 
-#: includes/class-output-repair.php:1064
+#: includes/class-output-repair.php:1102
 msgid "Link pending accessibility review"
 msgstr "連結待無障礙審查"
 
-#: includes/class-output-repair.php:1187
+#: includes/class-output-repair.php:1225
 #: includes/class-plugin.php:81
 msgid "options"
 msgstr "選項"
@@ -443,35 +443,35 @@ msgid "Content contains generic link text such as \"more\"; verify link purpose.
 msgstr "內容包含「更多」這類泛用連結文字；請確認連結目的。"
 
 #: includes/class-output-repair.php:163
-#: includes/class-output-repair.php:904
+#: includes/class-output-repair.php:929
 msgid "Page"
 msgstr "頁面"
 
-#: includes/class-output-repair.php:553
+#: includes/class-output-repair.php:569
 msgid "Map area pending accessibility review"
 msgstr "影像地圖區域待無障礙審查"
 
-#: includes/class-output-repair.php:699
+#: includes/class-output-repair.php:715
 #: includes/class-plugin.php:82
 msgid "button"
 msgstr "按鈕"
 
-#: includes/class-output-repair.php:1040
+#: includes/class-output-repair.php:1078
 msgid "Hidden form fields"
 msgstr "隱藏表單欄位"
 
-#: includes/class-output-repair.php:1053
+#: includes/class-output-repair.php:1091
 msgid "Form fields"
 msgstr "表單欄位"
 
-#: includes/class-output-repair.php:1072
+#: includes/class-output-repair.php:1110
 msgid "close"
 msgstr "關閉"
 
-#: includes/class-output-repair.php:1076
+#: includes/class-output-repair.php:1114
 msgid "menu"
 msgstr "選單"
 
-#: includes/class-output-repair.php:1080
+#: includes/class-output-repair.php:1118
 msgid "search"
 msgstr "搜尋"

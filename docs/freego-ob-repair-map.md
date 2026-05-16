@@ -16,7 +16,7 @@ The checker behavior was inspected from `/Applications/Freego.app/Contents/app/f
 | HM1130100C | Heading structure and empty heading conditions are checked. | Remove empty headings; inject visually hidden `h1` from document title when no heading exists; still mark hierarchy jumps for review. |
 | HM1130103C | `fieldset` groups need `legend`; select grouping is handled separately by `HM1130103C_1`. | Add visually hidden `legend` for fieldsets without one, with special label for CF7 hidden fields. |
 | HM1130103C_1 | Long `select` option lists may need `optgroup`. | Wrap long ungrouped select options in an `optgroup` in aggressive mode; mark review. |
-| HM1130104C | Visible form controls need label, title, or accessible name. | Add visually hidden labels from placeholder/name/fallback. |
+| HM1130104C | Visible form controls need label, title, or accessible name. | Add visually hidden labels plus `title`/`aria-label` from placeholder, first select option, name, or fallback. |
 | HM1240102C | Visible `nav` elements fail when they have no child elements. | Remove empty visible `nav` elements because they do not expose any navigable content. |
 | HM1240200C | The document head must contain a non-empty direct `title` element. | Create or fill head `title` from `wp_get_document_title()` or site name. |
 | HM1240400C | For `a[href]` that has both text and `img`, image `alt` must not duplicate the same link text. | When a linked image alt exactly equals the link text, clear the image `alt` and mark alt review. |
@@ -26,11 +26,14 @@ The checker behavior was inspected from `/Applications/Freego.app/Contents/app/f
 | HM1410201C | `iframe`/`frame` need non-empty `title`. | Add fallback iframe title in aggressive mode and mark review. |
 | HM2310200C | Body descendants with `lang` are checked; empty `lang` fails; same value as root `html lang` fails; template/slot/hidden elements are skipped. | Fill empty descendant `lang` with root page language; remove descendant `lang` when it normalizes to the root language. |
 | CS2140401C | `font-size` declarations using absolute units fail; Freego also scans external stylesheets. | Convert absolute `font-size` units (`px`, `pt`, `pc`, `in`, `cm`, `mm`) to `rem` in inline styles and same-origin local external CSS by replacing stylesheet/preload links with repaired inline style blocks and expanding same-origin `@import`. |
+| CS3140801C | `max-width` in external CSS should use a relative unit. | Convert absolute `max-width` units (`px`, `pt`, `pc`, `in`, `cm`, `mm`) to `rem` in inline styles and same-origin local external CSS. |
+| CS3140802C | `line-height` in external CSS should be unitless or use a relative unit. | Convert absolute `line-height` units (`px`, `pt`, `pc`, `in`, `cm`, `mm`) to `rem` in inline styles and same-origin local external CSS. |
+| HM3330500C | Form controls can need contextual `title` help. | Fill missing form control `title` from the same label inference used for `HM1130104C`. |
 
 ## Intentional Boundaries
 
 - Static CSS repair is allowlist based. By default it touches same-origin local CSS files under the WordPress root; the allowlist can be narrowed with `freego_wp_inline_css_repair_allowed_paths`.
-- CSS repair only changes `font-size`. It does not rewrite layout sizes.
+- CSS repair only changes the targeted `font-size`, `max-width`, and `line-height` declarations needed by the mapped Freego rules.
 - Cross-origin stylesheets and imports are not fetched or inlined.
 - Semantic rules that require author intent still leave review markers.
 - Runtime JavaScript covers post-load link/button naming, but this file focuses on the server-side OB layer because Freego commonly evaluates initial rendered HTML and linked CSS.
@@ -48,15 +51,12 @@ The checker behavior was inspected from `/Applications/Freego.app/Contents/app/f
 | HM1130200C | Bidirectional text direction requires language/content intent. |
 | HM1410100C | W3C validation is a document-wide validator concern; OB should avoid creating invalid markup. |
 | ME1320200C | Office-document links require real open-format alternatives such as PDF/HTML/ODF, not a synthetic OB value. |
-| CS3140801C | AAA column-width/layout requirements are report-only because automatic layout rewriting is high risk. |
-| CS3140802C | AAA line-height can be assisted by runtime CSS baseline, but theme-level correctness remains review. |
 | HM3240900C | AAA link title repair mirrors visible link text; empty/icon-only links still follow the A-level link-name rules. |
 | HM3241000C | AAA heading organization can be assisted by injecting a missing first heading, but content hierarchy remains review. |
-| HM3330500C | AAA contextual help text depends on form purpose and author intent. |
 
 ## Reverse Engineering Status
 
-The Freego app currently has 32 checker classes under `checker/v3/`. All 32 are classified here as either current OB coverage or review/report-only boundaries. The high-impact production predicates currently implemented in OB are: `HM1110100C`, `HM1110101C`, `HM1110104C`, `HM1110105C`, `HM1110106C`, `HM1130100C`, `HM1130103C`, `HM1130103C_1`, `HM1130104C`, `HM1240102C`, `HM1240200C`, `HM1240400C`, `HM1240401C`, `HM1310100C`, `HM1410200C`, `HM1410201C`, `HM2310200C`, and `CS2140401C`.
+The Freego app currently has 32 checker classes under `checker/v3/`. All 32 are classified here as either current OB coverage or review/report-only boundaries. The high-impact production predicates currently implemented in OB are: `HM1110100C`, `HM1110101C`, `HM1110104C`, `HM1110105C`, `HM1110106C`, `HM1130100C`, `HM1130103C`, `HM1130103C_1`, `HM1130104C`, `HM1240102C`, `HM1240200C`, `HM1240400C`, `HM1240401C`, `HM1310100C`, `HM1410200C`, `HM1410201C`, `HM2310200C`, `CS2140401C`, `CS3140801C`, `CS3140802C`, and `HM3330500C`.
 
 When Freego ships a new checker version, process updates the same way before claiming parity with that version:
 

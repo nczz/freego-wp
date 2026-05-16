@@ -193,7 +193,7 @@ final class Freego_WP_Output_Repair
 
             $style = $document->createElement('style');
             $style->setAttribute('data-freego-wp-inlined-css', esc_url($href));
-            $style->setAttribute('data-freego-wp-repaired', 'CS2140401C');
+            $style->setAttribute('data-freego-wp-repaired', 'CS2140401C CS3140801C CS3140802C');
 
             $media = trim($link->getAttribute('media'));
             if ($media !== '') {
@@ -251,7 +251,7 @@ final class Freego_WP_Output_Repair
 
         $seen[$path] = true;
         $repaired = $this->inline_css_imports($css, $url, $seen);
-        $repaired = $this->repair_css_font_sizes($repaired);
+        $repaired = $this->repair_css_accessibility_units($repaired);
         if ($repaired === $css) {
             return null;
         }
@@ -315,12 +315,28 @@ final class Freego_WP_Output_Repair
         return [$file, home_url('/' . $relative)];
     }
 
-    private function repair_css_font_sizes(string $css): string
+    private function repair_css_accessibility_units(string $css): string
     {
-        return preg_replace_callback(
+        $css = preg_replace_callback(
             '/font-size(\s*:\s*)([0-9]+(?:\.[0-9]+)?)(\s*)(px|pt|pc|in|cm|mm)\b/i',
             function (array $matches): string {
                 return 'font-size' . $matches[1] . $this->absolute_font_size_to_rem((float) $matches[2], strtolower($matches[4]));
+            },
+            $css
+        ) ?? $css;
+
+        $css = preg_replace_callback(
+            '/max-width(\s*:\s*)([0-9]+(?:\.[0-9]+)?)(\s*)(px|pt|pc|in|cm|mm)\b/i',
+            function (array $matches): string {
+                return 'max-width' . $matches[1] . $this->absolute_font_size_to_rem((float) $matches[2], strtolower($matches[4]));
+            },
+            $css
+        ) ?? $css;
+
+        return preg_replace_callback(
+            '/line-height(\s*:\s*)([0-9]+(?:\.[0-9]+)?)(\s*)(px|pt|pc|in|cm|mm)\b/i',
+            function (array $matches): string {
+                return 'line-height' . $matches[1] . $this->absolute_font_size_to_rem((float) $matches[2], strtolower($matches[4]));
             },
             $css
         ) ?? $css;
@@ -376,7 +392,7 @@ final class Freego_WP_Output_Repair
 
         $seen[$path] = true;
         $repaired = $this->inline_css_imports($css, $url, $seen);
-        $repaired = $this->repair_css_font_sizes($repaired);
+        $repaired = $this->repair_css_accessibility_units($repaired);
         $repaired = $this->rewrite_css_urls($repaired, $url);
         self::$css_inline_cache[$path] = $repaired;
 
@@ -391,13 +407,13 @@ final class Freego_WP_Output_Repair
             }
 
             $style = $element->getAttribute('style');
-            $repaired = $this->repair_css_font_sizes($style);
+            $repaired = $this->repair_css_accessibility_units($style);
             if ($repaired === $style) {
                 continue;
             }
 
             $element->setAttribute('style', $repaired);
-            $element->setAttribute('data-freego-wp-repaired', trim($element->getAttribute('data-freego-wp-repaired') . ' CS2140401C'));
+            $element->setAttribute('data-freego-wp-repaired', trim($element->getAttribute('data-freego-wp-repaired') . ' CS2140401C CS3140801C CS3140802C'));
         }
 
         foreach ($xpath->query('//style') ?: [] as $style_element) {
@@ -406,14 +422,14 @@ final class Freego_WP_Output_Repair
             }
 
             $css = $style_element->textContent;
-            $repaired = $this->repair_css_font_sizes($css);
+            $repaired = $this->repair_css_accessibility_units($css);
             if ($repaired === $css) {
                 continue;
             }
 
             $style_element->nodeValue = '';
             $style_element->appendChild($style_element->ownerDocument->createTextNode($repaired));
-            $style_element->setAttribute('data-freego-wp-repaired', trim($style_element->getAttribute('data-freego-wp-repaired') . ' CS2140401C'));
+            $style_element->setAttribute('data-freego-wp-repaired', trim($style_element->getAttribute('data-freego-wp-repaired') . ' CS2140401C CS3140801C CS3140802C'));
         }
     }
 
@@ -752,7 +768,12 @@ final class Freego_WP_Output_Repair
                 continue;
             }
 
+            $label_text = $this->field_label($control);
             if ($this->has_accessible_name($control, $xpath)) {
+                if (trim($control->getAttribute('title')) === '') {
+                    $control->setAttribute('title', $label_text);
+                    $control->setAttribute('data-freego-wp-repaired', trim($control->getAttribute('data-freego-wp-repaired') . ' HM3330500C'));
+                }
                 continue;
             }
 
@@ -762,7 +783,11 @@ final class Freego_WP_Output_Repair
                 $control->setAttribute('id', $id);
             }
 
-            $label = $document->createElement('label', $this->field_label($control));
+            $control->setAttribute('title', $label_text);
+            $control->setAttribute('aria-label', $label_text);
+            $control->setAttribute('data-freego-wp-repaired', trim($control->getAttribute('data-freego-wp-repaired') . ' HM1130104C HM3330500C'));
+
+            $label = $document->createElement('label', $label_text);
             $label->setAttribute('for', $id);
             $label->setAttribute('class', 'freego-wp-sr-only');
             $label->setAttribute('data-freego-wp-needs-label-review', '1');
@@ -1023,6 +1048,19 @@ final class Freego_WP_Output_Repair
         $placeholder = trim($control->getAttribute('placeholder'));
         if ($placeholder !== '') {
             return $placeholder;
+        }
+
+        if (strtolower($control->tagName) === 'select') {
+            foreach ($control->getElementsByTagName('option') as $option) {
+                if (!$option instanceof DOMElement) {
+                    continue;
+                }
+
+                $text = trim(preg_replace('/\s+/', ' ', $option->textContent) ?? '');
+                if ($text !== '') {
+                    return $text;
+                }
+            }
         }
 
         $name = trim($control->getAttribute('name'));
