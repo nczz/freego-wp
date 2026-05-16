@@ -25,13 +25,13 @@ The checker behavior was inspected from `/Applications/Freego.app/Contents/app/f
 | HM1410200C | Form/link controls must follow role/name requirements; `input[type=button]` needs non-empty `value`; `button` needs text or ARIA name; `a`/`area` with href are checked. | Add value for empty `input[type=button]`; add `aria-label` to icon-only buttons using class/context/fallback; link repair covers icon-only anchors. |
 | HM1410201C | `iframe`/`frame` need non-empty `title`. | Add fallback iframe title in aggressive mode and mark review. |
 | HM2310200C | Body descendants with `lang` are checked; empty `lang` fails; same value as root `html lang` fails; template/slot/hidden elements are skipped. | Fill empty descendant `lang` with root page language; remove descendant `lang` when it normalizes to the root language. |
-| CS2140401C | `font-size` declarations using absolute units fail; Freego also scans external stylesheets. | Convert `font-size:*px` to `rem` in inline styles and same-origin allowlisted external CSS by replacing stylesheet links with repaired inline style blocks. |
+| CS2140401C | `font-size` declarations using absolute units fail; Freego also scans external stylesheets. | Convert absolute `font-size` units (`px`, `pt`, `pc`, `in`, `cm`, `mm`) to `rem` in inline styles and same-origin local external CSS by replacing stylesheet/preload links with repaired inline style blocks and expanding same-origin `@import`. |
 
 ## Intentional Boundaries
 
-- Static CSS repair is allowlist based. By default it only touches same-origin files under `wp-content/themes/` and `wp-content/uploads/flipbook/`.
+- Static CSS repair is allowlist based. By default it touches same-origin local CSS files under the WordPress root; the allowlist can be narrowed with `freego_wp_inline_css_repair_allowed_paths`.
 - CSS repair only changes `font-size`. It does not rewrite layout sizes.
-- Cross-origin stylesheets are not fetched or inlined.
+- Cross-origin stylesheets and imports are not fetched or inlined.
 - Semantic rules that require author intent still leave review markers.
 - Runtime JavaScript covers post-load link/button naming, but this file focuses on the server-side OB layer because Freego commonly evaluates initial rendered HTML and linked CSS.
 

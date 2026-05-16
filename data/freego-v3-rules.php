@@ -228,7 +228,7 @@ return [
         'description' => '任何CSS樣式規則均使用具名字型尺寸，或者使用百分比或em等相對字型尺寸單位',
         'automation' => 'repair_then_review',
         'surface' => ['output_buffer', 'css_audit'],
-        'notes' => 'OB converts font-size px to rem in inline styles and same-origin allowlisted external CSS; broader CSS rewriting remains high risk.',
+        'notes' => 'OB converts absolute font-size units to rem in inline styles and same-origin local external CSS, including same-origin @import expansion; broader CSS rewriting remains high risk.',
     ],
     'HM2310200C' => [
         'level' => 'AA',

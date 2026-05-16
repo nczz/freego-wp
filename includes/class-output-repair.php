@@ -144,7 +144,11 @@ final class Freego_WP_Output_Repair
 
         $title = null;
         foreach ($head->getElementsByTagName('title') as $candidate) {
-            if ($candidate instanceof DOMElement && strtolower($candidate->parentNode?->nodeName ?? '') === 'head') {
+            if (
+                $candidate instanceof DOMElement &&
+                $candidate->parentNode instanceof DOMNode &&
+                strtolower($candidate->parentNode->nodeName) === 'head'
+            ) {
                 $title = $candidate;
                 break;
             }
@@ -211,7 +215,12 @@ final class Freego_WP_Output_Repair
         }
 
         $rel = strtolower(trim($link->getAttribute('rel')));
-        if ($rel === '' || strpos($rel, 'stylesheet') === false || strpos($rel, 'alternate') !== false) {
+        $as = strtolower(trim($link->getAttribute('as')));
+        if (
+            $rel === '' ||
+            strpos($rel, 'alternate') !== false ||
+            (strpos($rel, 'stylesheet') === false && !(strpos($rel, 'preload') !== false && $as === 'style'))
+        ) {
             return false;
         }
 
@@ -219,7 +228,7 @@ final class Freego_WP_Output_Repair
         return $href !== '' && !preg_match('/^(data|javascript):/i', $href);
     }
 
-    private function load_repaired_stylesheet(string $href): ?string
+    private function load_repaired_stylesheet(string $href, array $seen = []): ?string
     {
         $resolved = $this->resolve_local_stylesheet($href);
         if (!$resolved) {
@@ -227,6 +236,10 @@ final class Freego_WP_Output_Repair
         }
 
         [$path, $url] = $resolved;
+        if (isset($seen[$path])) {
+            return '';
+        }
+
         if (isset(self::$css_inline_cache[$path])) {
             return self::$css_inline_cache[$path];
         }
@@ -236,7 +249,9 @@ final class Freego_WP_Output_Repair
             return null;
         }
 
-        $repaired = $this->repair_css_font_sizes($css);
+        $seen[$path] = true;
+        $repaired = $this->inline_css_imports($css, $url, $seen);
+        $repaired = $this->repair_css_font_sizes($repaired);
         if ($repaired === $css) {
             return null;
         }
@@ -275,16 +290,13 @@ final class Freego_WP_Output_Repair
             return null;
         }
 
-        $allowed_prefixes = (array) apply_filters('freego_wp_inline_css_repair_allowed_paths', [
-            'wp-content/themes/',
-            'wp-content/uploads/flipbook/',
-        ]);
+        $allowed_prefixes = (array) apply_filters('freego_wp_inline_css_repair_allowed_paths', ['*']);
 
         $relative = ltrim($path, '/');
         $allowed = false;
         foreach ($allowed_prefixes as $prefix) {
             $prefix = ltrim((string) $prefix, '/');
-            if ($prefix !== '' && strpos($relative, $prefix) === 0) {
+            if ($prefix === '*' || ($prefix !== '' && strpos($relative, $prefix) === 0)) {
                 $allowed = true;
                 break;
             }
@@ -306,12 +318,69 @@ final class Freego_WP_Output_Repair
     private function repair_css_font_sizes(string $css): string
     {
         return preg_replace_callback(
-            '/font-size(\s*:\s*)([0-9]+(?:\.[0-9]+)?)px\b/i',
+            '/font-size(\s*:\s*)([0-9]+(?:\.[0-9]+)?)(\s*)(px|pt|pc|in|cm|mm)\b/i',
             function (array $matches): string {
-                return 'font-size' . $matches[1] . $this->px_to_rem((float) $matches[2]);
+                return 'font-size' . $matches[1] . $this->absolute_font_size_to_rem((float) $matches[2], strtolower($matches[4]));
             },
             $css
         ) ?? $css;
+    }
+
+    private function inline_css_imports(string $css, string $stylesheet_url, array $seen): string
+    {
+        return preg_replace_callback(
+            '/@import\s+(?:url\(\s*)?[\'"]?([^\'"\);]+)[\'"]?\s*\)?([^;]*);/i',
+            function (array $matches) use ($stylesheet_url, $seen): string {
+                $import_url = trim($matches[1]);
+                if ($import_url === '' || preg_match('/^(data:|javascript:|#)/i', $import_url)) {
+                    return $matches[0];
+                }
+
+                $resolved_url = $this->resolve_css_url($import_url, $stylesheet_url);
+                $imported = $this->load_stylesheet_content_for_inline($resolved_url, $seen);
+                if ($imported === null) {
+                    return $matches[0];
+                }
+
+                $media = trim($matches[2] ?? '');
+                if ($media !== '') {
+                    return "@media {$media} {\n{$imported}\n}";
+                }
+
+                return $imported;
+            },
+            $css
+        ) ?? $css;
+    }
+
+    private function load_stylesheet_content_for_inline(string $href, array $seen): ?string
+    {
+        $resolved = $this->resolve_local_stylesheet($href);
+        if (!$resolved) {
+            return null;
+        }
+
+        [$path, $url] = $resolved;
+        if (isset($seen[$path])) {
+            return '';
+        }
+
+        if (isset(self::$css_inline_cache[$path])) {
+            return self::$css_inline_cache[$path];
+        }
+
+        $css = file_get_contents($path);
+        if (!is_string($css) || $css === '') {
+            return null;
+        }
+
+        $seen[$path] = true;
+        $repaired = $this->inline_css_imports($css, $url, $seen);
+        $repaired = $this->repair_css_font_sizes($repaired);
+        $repaired = $this->rewrite_css_urls($repaired, $url);
+        self::$css_inline_cache[$path] = $repaired;
+
+        return $repaired;
     }
 
     private function repair_inline_font_sizes(DOMXPath $xpath): void
@@ -348,6 +417,32 @@ final class Freego_WP_Output_Repair
         }
     }
 
+    private function absolute_font_size_to_rem(float $value, string $unit): string
+    {
+        switch ($unit) {
+            case 'pt':
+                $px = $value * (4 / 3);
+                break;
+            case 'pc':
+                $px = $value * 16;
+                break;
+            case 'in':
+                $px = $value * 96;
+                break;
+            case 'cm':
+                $px = $value * (96 / 2.54);
+                break;
+            case 'mm':
+                $px = $value * (96 / 25.4);
+                break;
+            default:
+                $px = $value;
+                break;
+        }
+
+        return $this->px_to_rem($px);
+    }
+
     private function px_to_rem(float $px): string
     {
         if ($px == 0.0) {
@@ -374,6 +469,15 @@ final class Freego_WP_Output_Repair
             },
             $css
         ) ?? $css;
+    }
+
+    private function resolve_css_url(string $url, string $stylesheet_url): string
+    {
+        if (preg_match('/^(https?:)?\/\//i', $url) || strpos($url, '/') === 0) {
+            return $url;
+        }
+
+        return trailingslashit(dirname($stylesheet_url)) . $url;
     }
 
     private function repair_images(DOMXPath $xpath): void

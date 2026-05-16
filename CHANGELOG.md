@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.8
+
+- Improve CSS repair handling for same-origin local stylesheets.
+- Expand same-origin `@import` rules before inlining repaired CSS.
+- Convert additional absolute `font-size` units to rem.
+- Keep the output repair implementation compatible with PHP 7.4.
+
 ## 0.1.7
 
 - Expand Freego output-buffer repair coverage for additional checker predicates.
